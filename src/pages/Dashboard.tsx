@@ -17,6 +17,7 @@ import { doc as fsDoc, deleteDoc, updateDoc, collection, query as fsQuery, order
 import { formatPrice, PHONE_NUMBER } from "@/lib/data";
 import { generateGoogleCalendarUrl } from "@/lib/calendar";
 import { useAuth } from "@/hooks/useAuth";
+import DashboardSkeleton from "@/components/DashboardSkeleton";
 
 const statusColors: Record<string, string> = {
   pending: "bg-accent/20 text-accent-foreground",
@@ -39,6 +40,7 @@ const Dashboard = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterProperty, setFilterProperty] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("");
+  const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -68,6 +70,20 @@ const Dashboard = () => {
       return;
     }
 
+    const initialLoadStatus = {
+      properties: false,
+      bookings: false,
+      inquiries: false,
+      notifications: false,
+      roles: false,
+    };
+
+    const checkAllLoaded = () => {
+      if (Object.values(initialLoadStatus).every(Boolean)) {
+        setTimeout(() => setLoading(false), 200); // Small delay to avoid flicker
+      }
+    };
+
     const propsQ = fsQuery(collection(db, "properties"), fsOrderBy("createdAt", "desc"));
     const bookingsQ = fsQuery(collection(db, "bookings"), fsOrderBy("createdAt", "desc"));
     const inquiriesQ = fsQuery(collection(db, "inquiries"), fsOrderBy("createdAt", "desc"));
@@ -76,33 +92,38 @@ const Dashboard = () => {
       const out: any[] = [];
       snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
       setProperties(out);
-    }, (err) => console.error("Properties listener error:", err));
+      if (!initialLoadStatus.properties) { initialLoadStatus.properties = true; checkAllLoaded(); }
+    }, (err) => { console.error("Properties listener error:", err); if (!initialLoadStatus.properties) { initialLoadStatus.properties = true; checkAllLoaded(); } });
 
     const unsubBookings = onSnapshot(bookingsQ, (snap) => {
       const out: any[] = [];
       snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
       setBookings(out);
-    }, (err) => console.error("Bookings listener error:", err));
+      if (!initialLoadStatus.bookings) { initialLoadStatus.bookings = true; checkAllLoaded(); }
+    }, (err) => { console.error("Bookings listener error:", err); if (!initialLoadStatus.bookings) { initialLoadStatus.bookings = true; checkAllLoaded(); } });
 
     const unsubInquiries = onSnapshot(inquiriesQ, (snap) => {
       const out: any[] = [];
       snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
       setInquiries(out);
-    }, (err) => console.error("Inquiries listener error:", err));
+      if (!initialLoadStatus.inquiries) { initialLoadStatus.inquiries = true; checkAllLoaded(); }
+    }, (err) => { console.error("Inquiries listener error:", err); if (!initialLoadStatus.inquiries) { initialLoadStatus.inquiries = true; checkAllLoaded(); } });
 
     const notifsQ = fsQuery(collection(db, "notifications"), fsOrderBy("createdAt", "desc"));
     const unsubNotifs = onSnapshot(notifsQ, (snap) => {
       const out: any[] = [];
       snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
       setNotifications(out);
-    }, (err) => console.error("Notifications listener error:", err));
+      if (!initialLoadStatus.notifications) { initialLoadStatus.notifications = true; checkAllLoaded(); }
+    }, (err) => { console.error("Notifications listener error:", err); if (!initialLoadStatus.notifications) { initialLoadStatus.notifications = true; checkAllLoaded(); } });
 
     const rolesQ = fsQuery(collection(db, "roles"));
     const unsubRoles = onSnapshot(rolesQ, (snap) => {
       const out: any[] = [];
       snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
       setUserRoles(out);
-    }, (err) => console.error("Roles listener error:", err));
+      if (!initialLoadStatus.roles) { initialLoadStatus.roles = true; checkAllLoaded(); }
+    }, (err) => { console.error("Roles listener error:", err); if (!initialLoadStatus.roles) { initialLoadStatus.roles = true; checkAllLoaded(); } });
 
     return () => {
       unsubProps();
@@ -112,7 +133,7 @@ const Dashboard = () => {
       unsubRoles();
       if (typeof off === 'function') off();
     };
-  }, []);
+  }, [toast]);
 
 
   const handleDelete = async (id: string) => {
@@ -308,6 +329,16 @@ const Dashboard = () => {
     if (Number.isNaN(date.getTime())) return "-";
     return date.toLocaleString();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background overflow-x-hidden">
+        <Navbar />
+        <DashboardSkeleton />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">

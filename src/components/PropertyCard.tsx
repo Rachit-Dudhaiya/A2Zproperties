@@ -7,6 +7,24 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect, useRef } from "react";
 
+/**
+ * If the URL is from Cloudinary, it inserts image optimization parameters.
+ * This requests a smaller, auto-formatted, and auto-quality image for previews.
+ * @param url The original image URL.
+ * @param options.width The target width of the image.
+ * @param options.height The target height of the image.
+ * @returns The optimized image URL or the original URL if not from Cloudinary.
+ */
+const getOptimizedUrl = (url: string, options: { width: number; height: number }) => {
+  if (url && url.includes('res.cloudinary.com')) {
+    const parts = url.split('/upload/');
+    if (parts.length === 2) {
+      return `${parts[0]}/upload/w_${options.width},h_${options.height},c_fill,q_auto,f_auto/${parts[1]}`;
+    }
+  }
+  return url;
+};
+
 interface PropertyData {
   id: string;
   title: string;
@@ -159,17 +177,13 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
               <CarouselContent className="h-full">
                 {property.images.map((src: string, i: number) => (
                   <CarouselItem key={i} className="h-48">
-                    {src ? (
-                      <img src={src} alt={`${property.title}-${i}`} className="w-full h-48 object-cover" loading="lazy" />
-                    ) : (
-                      <div className="h-48 bg-hero opacity-20 flex items-center justify-center text-muted-foreground">No image</div>
-                    )}
+                    {src ? <img src={getOptimizedUrl(src, { width: 400, height: 240 })} alt={`${property.title}-${i}`} className="w-full h-48 object-cover" loading="lazy" /> : <div className="h-48 bg-hero opacity-20 flex items-center justify-center text-muted-foreground">No image</div>}
                   </CarouselItem>
                 ))}
               </CarouselContent>
             </Carousel>
           ) : (imgSrc && !imgError ? (
-            <img src={imgSrc} alt={property.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={() => setImgError(true)} />
+            <img src={getOptimizedUrl(imgSrc, { width: 400, height: 240 })} alt={property.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={() => setImgError(true)} />
           ) : (
             <div className="absolute inset-0 bg-hero opacity-20 flex items-center justify-center text-muted-foreground">No image</div>
           ))}
@@ -430,7 +444,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                 <div className="flex gap-2 overflow-x-auto w-full py-1">
                   {images.map((thumb, ti) => (
                     <button key={ti} onClick={() => setViewerIndex(ti)} className={`flex-none rounded-md overflow-hidden border ${ti === viewerIndex ? 'border-rose-500' : 'border-transparent'} hover:scale-105 transition-transform`}>
-                      <img src={thumb} alt={`thumb-${ti}`} className="w-20 h-12 object-cover" />
+                      <img src={getOptimizedUrl(thumb, { width: 80, height: 48 })} alt={`thumb-${ti}`} className="w-20 h-12 object-cover" />
                     </button>
                   ))}
                 </div>

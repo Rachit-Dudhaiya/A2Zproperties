@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp, doc as fsDoc, getDoc as fsGetDoc, getDocs as fsGetDocs, query as fsQuery, orderBy as fsOrderBy } from "firebase/firestore";
 import { formatPrice, VISIT_CHARGE, MAX_PROPERTIES_PER_VISIT, PHONE_NUMBER, UPI_ID, GOOGLE_SHEET_URL } from "@/lib/data";
+import PropertyDetailSkeleton from "@/components/PropertyDetailSkeleton";
 import { motion } from "framer-motion";
 import { openBookingWhatsApp } from "@/lib/whatsapp";
 
@@ -233,7 +234,7 @@ const PropertyDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 py-20 text-center text-muted-foreground font-body">Loading...</div>
+        <PropertyDetailSkeleton />
         <Footer />
       </div>
     );

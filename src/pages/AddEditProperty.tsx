@@ -23,6 +23,12 @@ const defaultForm = {
   price: 0, area: 0, bedrooms: 0, bathrooms: 0,
   location: "", address: "", description: "", features: [] as string[],
   image_url: "", images: [] as string[], is_featured: false,
+  maintenance_monthly: "",
+  floor_no: "",
+  car_parking: "",
+  facing: "",
+  project_status: "",
+  total_floors: "",
 };
 
 const AddEditProperty = () => {
@@ -67,6 +73,12 @@ const AddEditProperty = () => {
               image_url: d.image_url || "",
               images: d.images || [],
               is_featured: d.is_featured || false,
+              maintenance_monthly: d.maintenance_monthly || "",
+              floor_no: d.floor_no || "",
+              car_parking: d.car_parking || "",
+              facing: d.facing || "",
+              project_status: d.project_status || "",
+              total_floors: d.total_floors || "",
             });
           }
         } catch (err) {
@@ -240,6 +252,12 @@ const AddEditProperty = () => {
       image_url: form.image_url || (form.images && form.images[0]) || null,
       images: form.images || [],
       is_featured: form.is_featured,
+      maintenance_monthly: form.maintenance_monthly || null,
+      floor_no: form.floor_no || null,
+      car_parking: form.car_parking || null,
+      facing: form.facing || null,
+      project_status: form.project_status || null,
+      total_floors: form.total_floors || null,
     };
 
       try {
@@ -395,6 +413,39 @@ const AddEditProperty = () => {
             <div>
               <Label className="font-body">Bathrooms</Label>
               <Input type="number" value={form.bathrooms || ""} onChange={(e) => setForm({ ...form, bathrooms: Number(e.target.value) })} className="font-body" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="font-body">Maintenance (Monthly)</Label>
+              <Input value={form.maintenance_monthly} onChange={(e) => setForm({ ...form, maintenance_monthly: e.target.value })} className="font-body" placeholder="e.g. 2000" />
+            </div>
+            <div>
+              <Label className="font-body">Floor No</Label>
+              <Input value={form.floor_no} onChange={(e) => setForm({ ...form, floor_no: e.target.value })} className="font-body" placeholder="e.g. 7" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="font-body">Total Floors</Label>
+              <Input value={form.total_floors} onChange={(e) => setForm({ ...form, total_floors: e.target.value })} className="font-body" placeholder="e.g. 12" />
+            </div>
+            <div>
+              <Label className="font-body">Car Parking</Label>
+              <Input value={form.car_parking} onChange={(e) => setForm({ ...form, car_parking: e.target.value })} className="font-body" placeholder="e.g. 1 Covered" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="font-body">Facing</Label>
+              <Input value={form.facing} onChange={(e) => setForm({ ...form, facing: e.target.value })} className="font-body" placeholder="e.g. East" />
+            </div>
+            <div>
+              <Label className="font-body">Project Status</Label>
+              <Input value={form.project_status} onChange={(e) => setForm({ ...form, project_status: e.target.value })} className="font-body" placeholder="e.g. Ready to Move" />
             </div>
           </div>
 

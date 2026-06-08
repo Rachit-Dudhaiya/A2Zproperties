@@ -16,6 +16,8 @@ import Inquiry from "./pages/Inquiry";
 import NotFound from "./pages/NotFound";
 import BookSlot from "./pages/BookSlot";
 import About from "./pages/About";
+import "react-loading-skeleton/dist/skeleton.css";
+import {SkeletonTheme} from "react-loading-skeleton";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +46,7 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
     };
   }, [user, refreshRole]);
 
-  if (loading || checking) return <div className="min-h-screen flex items-center justify-center text-muted-foreground font-body">Loading...</div>;
+  // if (loading || checking) return <div className="min-h-screen flex items-center justify-center text-muted-foreground font-body">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
@@ -52,7 +54,7 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground font-body">Loading...</div>;
+  // if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground font-body">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 };
@@ -64,7 +66,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          {/* <SkeletonTheme baseColor="#797373" highlightColor="#c2bcbc"> */}
+          <SkeletonTheme baseColor="#fdfdfd" highlightColor="#667ea0">
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/properties" element={<Properties />} />
@@ -78,6 +82,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedAdminRoute><Dashboard /></ProtectedAdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </SkeletonTheme>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

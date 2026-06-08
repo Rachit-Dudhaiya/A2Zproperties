@@ -7,6 +7,9 @@ import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import { db } from "@/integrations/firebase/client";
 import { collection, query as fsQuery, orderBy as fsOrderBy, onSnapshot } from "firebase/firestore";
+// import SkeletonCard  from "@/components/SkeletonCard";
+import SkeletonCard from "@/components/SkeletonCard";
+
 
 const Properties = () => {
   const [allProperties, setAllProperties] = useState<any[]>([]);
@@ -25,7 +28,10 @@ const Properties = () => {
       const out: any[] = [];
       snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
       setAllProperties(out);
-      setLoading(false);
+      // Artificial delay to show skeleton loader
+      setTimeout(() => {
+        setLoading(false);
+      }, 500); // 0.5 second delay
     }, (err) => {
       console.error("Properties listener error:", err);
       setLoading(false);
@@ -122,6 +128,8 @@ const Properties = () => {
     return sortFeaturedFirst(matched);
   }, [allProperties, search, typeFilter, locationFilter, statusFilter, budgetFilter]);
 
+  const skeletonCount = filtered.length > 0 ? filtered.length : 9;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -129,7 +137,7 @@ const Properties = () => {
         <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-2">
           All <span className="text-secondary">Properties</span>
         </h1>
-        <p className="text-muted-foreground font-body mb-8">Browse {allProperties.length} properties across Rajkot</p>
+        <p className="text-muted-foreground font-body mb-8">{loading ? "Loading properties..." : `Showing ${filtered.length} of ${allProperties.length} properties`}</p>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <div className="relative flex-1">
@@ -168,6 +176,7 @@ const Properties = () => {
             <SelectTrigger className="w-full sm:w-40 font-body"><SelectValue placeholder="Budget" /></SelectTrigger>
             <SelectContent className="w-full sm:w-auto">
               <SelectItem value="all">All Budgets</SelectItem>
+              <SelectItem value="0-10000">0K - 10K</SelectItem>
               <SelectItem value="10000-20000">10K - 20K</SelectItem>
               <SelectItem value="20000-30000">20K - 30K</SelectItem>
               <SelectItem value="30000-40000">30K - 40K</SelectItem>
@@ -182,7 +191,9 @@ const Properties = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-muted-foreground font-body">Loading properties...</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: skeletonCount }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground font-body">No properties found matching your filters.</div>
         ) : (

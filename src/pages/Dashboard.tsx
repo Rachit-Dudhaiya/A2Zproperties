@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ContactMenu from "@/components/ContactMenu";
-import { registerAdminFcmToken, onForegroundMessage } from "@/integrations/firebase/fcm";
+import { onForegroundMessage, registerAdminFcmToken } from "@/integrations/firebase/fcm";
 import { auth, db } from "@/integrations/firebase/client";
 import { doc as fsDoc, deleteDoc, updateDoc, collection, query as fsQuery, orderBy as fsOrderBy, onSnapshot, getDocs as fsGetDocs, writeBatch } from "firebase/firestore";
 import { formatPrice, PHONE_NUMBER } from "@/lib/data";
@@ -254,6 +254,8 @@ const Dashboard = () => {
       toast({ title: "Error", description: String(err?.message || err), variant: "destructive" });
     }
   };
+
+
 
   const pendingBookings = bookings.filter(b => b.status === "pending").length;
   const newInquiries = inquiries.filter(i => i.status === "new").length;
@@ -746,18 +748,22 @@ const Dashboard = () => {
             </div>
           </TabsContent>
 
+          {/* Properties Tab */}
           <TabsContent value="properties">
             <div className="bg-card rounded-lg shadow-card overflow-hidden">
               {isMobile ? (
                 <div className="p-4 space-y-3">
                   {properties.map((p) => (
+                    // Mobile view property card
                     <div key={p.id} className="rounded-lg border border-border bg-background p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="font-medium text-card-foreground">{p.title}</div>
                           <div className="text-xs text-muted-foreground">{p.type}</div>
                         </div>
-                        <Badge className="bg-secondary/10 text-secondary font-body text-xs">{p.status}</Badge>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge className="bg-secondary/10 text-secondary font-body text-xs">{p.status}</Badge>
+                        </div>
                       </div>
                       <div className="mt-2 text-secondary font-semibold">{formatPrice(p.price)}</div>
                       <div className="mt-3 flex items-center gap-2">
@@ -780,6 +786,7 @@ const Dashboard = () => {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm font-body">
+                    {/* Desktop table header */}
                     <thead className="bg-muted">
                       <tr>
                         <th className="text-left p-3 text-muted-foreground">Title</th>
@@ -794,7 +801,8 @@ const Dashboard = () => {
                         <tr key={p.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                           <td className="p-3 text-card-foreground font-medium">{p.title}</td>
                           <td className="p-3 hidden md:table-cell"><Badge variant="outline" className="font-body text-xs">{p.type}</Badge></td>
-                          <td className="p-3 text-secondary font-semibold">{formatPrice(p.price)}</td>
+                          <td className="p-3 text-secondary font-semibold">{p.price ? formatPrice(p.price) : 'N/A'}</td>
+                          {/* New column for toggling home display */}
                           <td className="p-3 hidden md:table-cell"><Badge className="bg-secondary/10 text-secondary font-body text-xs">{p.status}</Badge></td>
                           <td className="p-3 text-right">
                             <div className="flex items-center justify-end gap-1">

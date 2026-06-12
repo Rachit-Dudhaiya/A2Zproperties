@@ -27,7 +27,10 @@ export async function supabaseQuery<T = any>(options: QueryOptions): Promise<{ d
     for (const [k, v] of Object.entries(filters || {})) {
       const parts = String(v).split(".");
       if (parts[0] === "eq") {
-        constraints.push(fsWhere(k, "==", parts.slice(1).join(".")));
+        let value: any = parts.slice(1).join(".");
+        if (value === "true") value = true;
+        if (value === "false") value = false;
+        constraints.push(fsWhere(k, "==", value));
       }
     }
 

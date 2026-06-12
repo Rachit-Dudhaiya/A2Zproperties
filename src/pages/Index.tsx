@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Phone, Building, Home, MapPin, Star } from "lucide-react";
@@ -10,17 +10,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import PropertyCard from "@/components/PropertyCard";
 import { PHONE_NUMBER } from "@/lib/data";
-import { supabaseQuery } from "@/lib/supabase-query";
 import heroBg from "@/assets/hero-bg.jpg";
 import { db } from "@/integrations/firebase/client";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
+import Autoplay from "embla-carousel-autoplay";
 import { isValidPhone } from "@/lib/validation";
 
 const Index = () => {
   const { toast } = useToast();
   const [featured, setFeatured] = useState<any[]>([]);
+  const [homeProperties, setHomeProperties] = useState<any[]>([]);
   const [stats, setStats] = useState<{ properties: number | null; locations: number | null }>({
     properties: null,
     locations: null,
@@ -33,34 +35,65 @@ const Index = () => {
   });
   const [quickErrors, setQuickErrors] = useState<{ name?: string; phone?: string; requirement?: string }>({});
   const [quickLoading, setQuickLoading] = useState(false);
+  const plugin = useRef(
+    Autoplay({ delay: 3000, stopOnInteraction: true })
+  );
+  const [api, setApi] = useState<CarouselApi>();
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      const { data, error } = await supabaseQuery({
-        table: "properties",
-        filters: { "is_featured": "eq.true" },
-        limit: 4,
-      });
-      if (error) console.error("Error fetching featured:", error);
-      setFeatured(data || []);
+      if (!db) return;
+      try {
+        const q = query(collection(db, "properties"), where("is_featured", "==", true));
+        const querySnapshot = await getDocs(q);
+        const propertiesList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Remove potential duplicates before setting state
+        const uniqueProperties = Array.from(new Map(propertiesList.map(p => [p.id, p])).values());
+        setFeatured(uniqueProperties);
+      } catch (error) {
+        console.error("Error fetching featured properties from Firestore:", error);
+      }
     };
     const fetchStats = async () => {
-      const { data, error } = await supabaseQuery({ table: "properties" });
-      if (error) {
-        console.error("Error fetching stats:", error);
+      if (!db) {
         return;
       }
-      const items = data || [];
-      const locationSet = new Set<string>();
-      items.forEach((p: any) => {
-        const loc = (p.location || p.address || "").toString().trim();
-        if (loc) locationSet.add(loc);
-      });
-      setStats({ properties: items.length, locations: locationSet.size });
+      try {
+        const querySnapshot = await getDocs(collection(db, "properties"));
+        const items = querySnapshot.docs.map(doc => doc.data());
+        const locationSet = new Set<string>();
+        items.forEach((p: any) => {
+          const loc = (p.location || p.address || "").toString().trim();
+          if (loc) locationSet.add(loc);
+        });
+        setStats({ properties: items.length, locations: locationSet.size });
+      } catch (error) {
+        console.error("Error fetching stats from Firestore:", error);
+      }
+    };
+    const fetchHomeProperties = async () => {
+      if (!db) return;
+      try {
+        const q = query(collection(db, "properties"), where("display_on_home", "==", true), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const propertiesList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setHomeProperties(propertiesList);
+      } catch (error: any) {
+        console.error("Error fetching home properties from Firestore:", error);
+        if (String(error?.message || error).includes("requires an index")) {
+          toast({
+            title: "Database Index Required",
+            description: "Displaying properties on the home page requires a database index. Check the browser console for a link to create it.",
+            variant: "destructive",
+            duration: 1000,
+          });
+        }
+      }
     };
     fetchFeatured();
     fetchStats();
-  }, []);
+    fetchHomeProperties();
+  }, [toast]);
 
   const updateQuickForm = (field: string, value: string) => {
     setQuickForm((prev) => ({ ...prev, [field]: value }));
@@ -146,6 +179,14 @@ const Index = () => {
     }
   };
 
+  const handleMouseEnter = useCallback(() => {
+    api?.plugins()?.autoplay?.stop();
+  }, [api]);
+
+  const handleMouseLeave = useCallback(() => {
+    api?.plugins()?.autoplay?.play();
+  }, [api]);
+
   const statsCards = [
     { label: "Properties Listed", value: stats.properties === null ? "—" : String(stats.properties), icon: Building },
     { label: "Happy Clients", value: "3000+", icon: Star },
@@ -174,9 +215,9 @@ const Index = () => {
                   Browse Properties <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-                <ContactMenu phone={PHONE_NUMBER} className="w-full block">
-                  <Button size="lg" className="w-full"><Phone className="mr-2 h-5 w-5" /> Call for Inquiry</Button>
-                </ContactMenu>
+              <ContactMenu phone={PHONE_NUMBER} className="w-full block">
+                <Button size="lg" className="w-full"><Phone className="mr-2 h-5 w-5" /> Call for Inquiry</Button>
+              </ContactMenu>
             </div>
           </motion.div>
         </div>
@@ -260,11 +301,29 @@ const Index = () => {
           </h2>
           <p className="mt-2 text-muted-foreground font-body">Handpicked properties from the best locations in Rajkot</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((p, i) => (
-            <PropertyCard key={p.id} property={p} index={i} />
-          ))}
-        </div>
+        {featured.length > 0 && (
+          <Carousel
+            setApi={setApi}
+            plugins={[plugin.current]}
+            opts={{
+              align: "start",
+              loop: featured.length > 4, // Loop if more than 4 properties, as that's the max visible on large screens
+            }}
+            className="w-full"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <CarouselContent>
+              {featured.map((p, i) => (
+                <CarouselItem key={p.id} className="sm:basis-1/2 lg:basis-1/4">
+                  <PropertyCard property={p} index={i} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden sm:flex" />
+            <CarouselNext className="hidden sm:flex" />
+          </Carousel>
+        )}
         <div className="text-center mt-10">
           <Link to="/properties">
             <Button variant="outline" size="lg" className="font-body">View All Properties <ArrowRight className="ml-2 h-4 w-4" /></Button>
@@ -288,9 +347,9 @@ const Index = () => {
                 <Home className="mr-2 h-5 w-5" /> Choose Properties & Book
               </Button>
             </Link>
-              <ContactMenu phone={PHONE_NUMBER}>
-                <Button variant="outline"><Phone className="mr-2 h-4 w-4" /> Call</Button>
-              </ContactMenu>
+            <ContactMenu phone={PHONE_NUMBER}>
+              <Button variant="outline"><Phone className="mr-2 h-4 w-4" /> Call</Button>
+            </ContactMenu>
           </div>
         </div>
       </section>

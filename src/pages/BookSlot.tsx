@@ -13,6 +13,7 @@ import { doc as fsDoc, getDoc as fsGetDoc, addDoc, collection, serverTimestamp, 
 import { TIME_SLOTS_MORNING, TIME_SLOTS_EVENING, VISIT_CHARGE, MAX_PROPERTIES_PER_VISIT, UPI_ID, GOOGLE_SHEET_URL } from "@/lib/data";
 import { openBookingWhatsApp } from "@/lib/whatsapp";
 import { isValidPhone } from "@/lib/validation";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default function BookSlot() {
   const [search] = useSearchParams();
@@ -607,6 +608,7 @@ export default function BookSlot() {
         </div>
       </div>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 }

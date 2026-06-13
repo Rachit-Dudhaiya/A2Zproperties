@@ -1,6 +1,7 @@
 import React from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default function About() {
   return (
@@ -32,6 +33,7 @@ export default function About() {
         </p>
       </div>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 }

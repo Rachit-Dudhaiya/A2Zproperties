@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { supabaseQuery } from "@/lib/supabase-query";
 import { db } from "@/integrations/firebase/client";
 import { collection, query as fsQuery, where as fsWhere, orderBy as fsOrderBy, getDocs as fsGetDocs } from "firebase/firestore";
@@ -207,6 +208,7 @@ const MyBookings = () => {
         )}
       </div>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

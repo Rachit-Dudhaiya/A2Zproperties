@@ -11,6 +11,7 @@ import { db } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { motion } from "framer-motion";
 import { isValidPhone } from "@/lib/validation";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const Inquiry = () => {
   const { toast } = useToast();
@@ -182,6 +183,7 @@ const Inquiry = () => {
         </motion.div>
       </div>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

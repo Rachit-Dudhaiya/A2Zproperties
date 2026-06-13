@@ -9,6 +9,7 @@ import { db } from "@/integrations/firebase/client";
 import { collection, query as fsQuery, orderBy as fsOrderBy, onSnapshot } from "firebase/firestore";
 // import SkeletonCard  from "@/components/SkeletonCard";
 import SkeletonCard from "@/components/SkeletonCard";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 
 const Properties = () => {
@@ -203,6 +204,7 @@ const Properties = () => {
         )}
       </div>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

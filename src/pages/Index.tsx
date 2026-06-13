@@ -18,10 +18,13 @@ import { db } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
 import Autoplay from "embla-carousel-autoplay";
 import { isValidPhone } from "@/lib/validation";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import SkeletonCard from "@/components/SkeletonCard";
 
 const Index = () => {
   const { toast } = useToast();
   const [featured, setFeatured] = useState<any[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
   const [homeProperties, setHomeProperties] = useState<any[]>([]);
   const [stats, setStats] = useState<{ properties: number | null; locations: number | null }>({
     properties: null,
@@ -43,6 +46,7 @@ const Index = () => {
   useEffect(() => {
     const fetchFeatured = async () => {
       if (!db) return;
+      setFeaturedLoading(true);
       try {
         const q = query(collection(db, "properties"), where("is_featured", "==", true));
         const querySnapshot = await getDocs(q);
@@ -52,6 +56,8 @@ const Index = () => {
         setFeatured(uniqueProperties);
       } catch (error) {
         console.error("Error fetching featured properties from Firestore:", error);
+      } finally {
+        setFeaturedLoading(false);
       }
     };
     const fetchStats = async () => {
@@ -301,7 +307,22 @@ const Index = () => {
           </h2>
           <p className="mt-2 text-muted-foreground font-body">Handpicked properties from the best locations in Rajkot</p>
         </div>
-        {featured.length > 0 && (
+        {featuredLoading ? (
+          <Carousel
+            opts={{
+              align: "start",
+            }}
+            className="w-full"
+          >
+            <CarouselContent>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <CarouselItem key={i} className="sm:basis-1/2 lg:basis-1/4">
+                  <SkeletonCard />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        ) : featured.length > 0 && (
           <Carousel
             setApi={setApi}
             plugins={[plugin.current]}
@@ -355,6 +376,7 @@ const Index = () => {
       </section>
 
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

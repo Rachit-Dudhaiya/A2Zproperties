@@ -297,7 +297,7 @@ const Index = () => {
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-            Featured <span className="text-secondary">Properties to</span>
+            Featured <span className="text-secondary">Properties</span>
           </h2>
           <p className="mt-2 text-muted-foreground font-body">Handpicked properties from the best locations in Rajkot</p>
         </div>

@@ -140,6 +140,15 @@ app.post('/createPaymentIntent', async (req, res) => {
 
 // Send push notification to admins using stored FCM tokens
 app.post('/sendNotification', async (req, res) => {
+  // Require caller to be an authenticated admin.
+  try {
+    await assertAdmin(req);
+  } catch (err: any) {
+    const msg = String(err?.message || err || 'Not authorized');
+    const code = msg.includes('Missing auth token') ? 401 : 403;
+    return res.status(code).json({ ok: false, error: msg });
+  }
+
   const { type, refId, title, message, data = {} } = req.body || {};
   if (!admin.apps.length) return res.status(500).json({ ok: false, error: 'firebase-admin not initialized' });
   try {

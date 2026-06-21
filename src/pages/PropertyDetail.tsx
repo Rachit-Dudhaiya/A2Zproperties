@@ -12,7 +12,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ContactMenu from "@/components/ContactMenu";
 import { useAuth } from "@/hooks/useAuth";
-import { db } from "@/integrations/firebase/client";
+import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp, doc as fsDoc, getDoc as fsGetDoc, getDocs as fsGetDocs, query as fsQuery, orderBy as fsOrderBy } from "firebase/firestore";
 import { formatPrice, VISIT_CHARGE, MAX_PROPERTIES_PER_VISIT, PHONE_NUMBER, UPI_ID, GOOGLE_SHEET_URL } from "@/lib/data";
 import PropertyDetailSkeleton from "@/components/PropertyDetailSkeleton";
@@ -433,9 +433,12 @@ const PropertyDetail = () => {
         });
         try {
           const fnUrl = import.meta.env.VITE_FUNCTIONS_URL || "/api";
+          const token = await getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers.Authorization = `Bearer ${token}`;
           await fetch(`${fnUrl.replace(/\/$/, '')}/sendNotification`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify({ type: "booking", refId: bookingRef.id, title: "New Booking", message: `${name} • ${phone}` }),
           });
         } catch (e) {

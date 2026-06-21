@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { storage, db } from "@/integrations/firebase/client";
+import { storage, db, getIdToken } from "@/integrations/firebase/client";
 import { doc as fsDoc, getDoc as fsGetDoc, addDoc, collection, serverTimestamp, getDocs as fsGetDocs, query as fsQuery, where as fsWhere } from "firebase/firestore";
 import { TIME_SLOTS_MORNING, TIME_SLOTS_EVENING, VISIT_CHARGE, MAX_PROPERTIES_PER_VISIT, UPI_ID, GOOGLE_SHEET_URL } from "@/lib/data";
 import { openBookingWhatsApp } from "@/lib/whatsapp";
@@ -390,7 +390,7 @@ export default function BookSlot() {
         total: totalDueNow,
       });
 
-      try {
+        try {
         await addDoc(collection(db, "notifications"), {
           type: "booking",
           refId: bkRef.id,
@@ -401,9 +401,12 @@ export default function BookSlot() {
         });
         try {
           const fnUrl = import.meta.env.VITE_FUNCTIONS_URL || "/api";
+          const token = await getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers.Authorization = `Bearer ${token}`;
           await fetch(`${fnUrl.replace(/\/$/, '')}/sendNotification`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify({ type: "booking", refId: bkRef.id, title: "New Booking", message: `${name} • ${phone}` }),
           });
         } catch (e) {

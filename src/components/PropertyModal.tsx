@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { db } from "@/integrations/firebase/client";
+import { db, getIdToken } from "@/integrations/firebase/client";
 import { doc as fsDoc, getDoc as fsGetDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -99,9 +99,12 @@ export default function PropertyModal({ propertyId, trigger }: Props) {
         });
         try {
           const fnUrl = import.meta.env.VITE_FUNCTIONS_URL || "/api";
+          const token = await getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers.Authorization = `Bearer ${token}`;
           await fetch(`${fnUrl.replace(/\/$/, '')}/sendNotification`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify({ type: "booking", refId: bkRef.id, title: "New Booking", message: `${name} • ${phone}` }),
           });
         } catch (e) {

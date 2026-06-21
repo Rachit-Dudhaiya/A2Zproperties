@@ -14,7 +14,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import PropertyCard from "@/components/PropertyCard";
 import { PHONE_NUMBER } from "@/lib/data";
 import heroBg from "@/assets/hero-bg.jpg";
-import { db } from "@/integrations/firebase/client";
+import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
 import Autoplay from "embla-carousel-autoplay";
 import { isValidPhone } from "@/lib/validation";
@@ -147,9 +147,12 @@ const Index = () => {
         });
         try {
           const fnUrl = import.meta.env.VITE_FUNCTIONS_URL || "/api";
+          const token = await getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers.Authorization = `Bearer ${token}`;
           await fetch(`${fnUrl.replace(/\/$/, "")}/sendNotification`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify({ type: "inquiry", refId: docRef.id, title: "New Inquiry", message: `${quickForm.name.trim()} • ${quickForm.phone.trim()}` }),
           });
         } catch (err) {

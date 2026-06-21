@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { db } from "@/integrations/firebase/client";
+import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { motion } from "framer-motion";
 import { isValidPhone } from "@/lib/validation";
@@ -72,12 +72,15 @@ const Inquiry = () => {
           read: false,
           createdAt: serverTimestamp(),
         });
-        // trigger push via functions endpoint (best-effort)
+        // trigger push via functions endpoint (best-effort). Only admins with a valid ID token will succeed.
         try {
           const fnUrl = import.meta.env.VITE_FUNCTIONS_URL || "/api";
+          const token = await getIdToken();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers.Authorization = `Bearer ${token}`;
           await fetch(`${fnUrl.replace(/\/$/, '')}/sendNotification`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify({ type: "inquiry", refId: docRef.id, title: "New Inquiry", message: `${form.name.trim()} • ${form.phone.trim()}` }),
           });
         } catch (e) {

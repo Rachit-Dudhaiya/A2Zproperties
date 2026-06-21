@@ -36,27 +36,45 @@ if (!hasApiKey) {
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
-  messaging = getMessaging(app);
 }
 
 isSupported().then((supported) => {
-  if (supported) {
-    const messaging = getMessaging(app);
+  if (supported && app) {
+    messaging = getMessaging(app);
     console.log("Messaging initialized");
   } else {
     console.log("Firebase Messaging not supported");
   }
+}).catch((err) => {
+  console.log("Firebase Messaging not supported", err);
 });
 
 export const generateFirebaseToken = async () => {
-  const permission = await Notification.requestPermission();
-  console.log(permission);
-  if(permission === "granted") {
-
-    const token = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-    });
-    console.log(token);
+  try {
+    const supported = await isSupported();
+    if (!supported) {
+      console.log("Firebase Messaging not supported in this browser");
+      return;
+    }
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      console.log("Notifications not supported in this browser");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    console.log("Notification permission:", permission);
+    if (permission === "granted") {
+      if (!messaging && app) {
+        messaging = getMessaging(app);
+      }
+      if (messaging) {
+        const token = await getToken(messaging, {
+          vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+        });
+        console.log("FCM token:", token);
+      }
+    }
+  } catch (error) {
+    console.warn("generateFirebaseToken failed", error);
   }
 };
 export default app;

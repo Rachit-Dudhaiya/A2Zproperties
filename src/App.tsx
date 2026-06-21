@@ -18,8 +18,8 @@ import BookSlot from "./pages/BookSlot";
 import About from "./pages/About";
 import "react-loading-skeleton/dist/skeleton.css";
 import {SkeletonTheme} from "react-loading-skeleton";
-import { generateFirebaseToken, messaging } from "./integrations/firebase/client";
-import { onMessage } from "firebase/messaging";
+import { generateFirebaseToken } from "./integrations/firebase/client";
+import { onForegroundMessage } from "./integrations/firebase/fcm";
 // import toast, { Toaster } from 'react-hot-toast';
 
 
@@ -63,41 +63,49 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
-  useEffect(()=> {
+const App = () => {
+  useEffect(() => {
     generateFirebaseToken();
-    onMessage(messaging, (playload)=>{
-      console.log(playload);
-      toast(playload.notification.body);
-    })
-  }, []),
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          {/* <SkeletonTheme baseColor="#797373" highlightColor="#c2bcbc"> */}
-          <SkeletonTheme baseColor="#fdfdfd" highlightColor="#667ea0">
-            <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/properties" element={<Properties />} />
-            <Route path="/property/:id" element={<PropertyDetail />} />
-            <Route path="/inquiry" element={<Inquiry />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/book" element={<BookSlot />} />
-            <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
-            <Route path="/add-property" element={<ProtectedAdminRoute><AddEditProperty /></ProtectedAdminRoute>} />
-            <Route path="/edit-property/:id" element={<ProtectedAdminRoute><AddEditProperty /></ProtectedAdminRoute>} />
-            <Route path="/dashboard" element={<ProtectedAdminRoute><Dashboard /></ProtectedAdminRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </SkeletonTheme>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    const unsubscribe = onForegroundMessage((payload) => {
+      console.log(payload);
+      if (payload?.notification?.body) {
+        toast(payload.notification.body);
+      }
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            {/* <SkeletonTheme baseColor="#797373" highlightColor="#c2bcbc"> */}
+            <SkeletonTheme baseColor="#fdfdfd" highlightColor="#667ea0">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/properties" element={<Properties />} />
+                <Route path="/property/:id" element={<PropertyDetail />} />
+                <Route path="/inquiry" element={<Inquiry />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/book" element={<BookSlot />} />
+                <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
+                <Route path="/add-property" element={<ProtectedAdminRoute><AddEditProperty /></ProtectedAdminRoute>} />
+                <Route path="/edit-property/:id" element={<ProtectedAdminRoute><AddEditProperty /></ProtectedAdminRoute>} />
+                <Route path="/dashboard" element={<ProtectedAdminRoute><Dashboard /></ProtectedAdminRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </SkeletonTheme>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

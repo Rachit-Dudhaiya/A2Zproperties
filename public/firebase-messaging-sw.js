@@ -15,8 +15,8 @@ firebase.initializeApp({
   projectId: VITE_FIREBASE_PROJECT_ID,
   storageBucket: VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: 'app-id',
-  measurementId: 'G-measurement-id',
+  appId: VITE_FIREBASE_APP_ID,
+  measurementId: VITE_FIREBASE_MEASUREMENT_ID,
 });
 
 // Retrieve an instance of Firebase Messaging so that it can handle background

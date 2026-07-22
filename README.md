@@ -1,73 +1,85 @@
-# Welcome to your Lovable project
+# A TO Z Properties
 
-## Project info
+A TO Z Properties is a React + Vite real estate listing application built with Tailwind CSS, shadcn/ui, Firebase, and Supabase.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Project overview
 
-## How can I edit this code?
+This repository includes:
 
-There are several ways of editing your application.
+- Frontend app built with React, TypeScript, Vite, and Tailwind CSS
+- Firebase integration for authentication, Firestore, storage, and messaging
+- Supabase client for additional backend data access
+- A Firebase Cloud Functions folder for function-based server logic
+- A service worker for Firebase Messaging in `public/firebase-messaging-sw.js`
 
-**Use Lovable**
+## Getting started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### 1. Install dependencies
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+npm install
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2. Create local environment variables
 
-# Step 3: Install the necessary dependencies.
-npm i
+Copy or create a `.env.local` file at the project root with the following values:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```env
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_VAPID_KEY=
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+```
+
+### 3. Run the development server
+
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open the local URL printed by Vite to view the app.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev` — start the development server
+- `npm run build` — produce a production build
+- `npm run preview` — preview the production build locally
+- `npm run lint` — run ESLint across the project
+- `npm run test` — run unit tests with Vitest
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Firebase and Supabase
 
-## What technologies are used for this project?
+The app loads Firebase config from `import.meta.env` variables in `src/integrations/firebase/client.ts`.
 
-This project is built with:
+The Supabase client is configured in `src/integrations/supabase/client.ts` using:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-## How can I deploy this project?
+## Firebase Cloud Functions
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+The `functions/` folder contains a separate Firebase Functions project. If you need to work with cloud functions:
 
-## Can I connect a custom domain to my Lovable project?
+```sh
+cd functions
+npm install
+```
 
-Yes, you can!
+Then follow the Firebase Functions deployment workflow for your project.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Recommended environment
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Node.js 18 or newer
+- npm 9 or newer
+- A modern browser for local development
+
+## Notes
+
+- Keep `serviceAccountKey.json` and any secret credentials out of public repositories.
+- Make sure Firebase and Supabase environment values are set correctly before starting the app.
+- The project uses `tailwindcss-animate`, `@radix-ui` components, and `react-hook-form` for UI and form handling.

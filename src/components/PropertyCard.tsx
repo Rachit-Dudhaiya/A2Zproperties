@@ -36,6 +36,10 @@ interface PropertyData {
   bathrooms: number | null;
   location: string | null;
   is_featured: boolean | null;
+  images?: string[] | null;
+  image_url?: string | null;
+  agent_avatar?: string | null;
+  agent_name?: string | null;
 }
 
 interface Props {
@@ -276,6 +280,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                 }}
                 onTouchStart={(e) => {
                   // record touch start for swipe detection (only when not zoomed)
+                  if (!e.touches?.length) return;
                   if (e.touches.length === 2) {
                     // start pinch
                     const a = e.touches[0];
@@ -300,7 +305,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                   touchStartRef.current = { x: t.clientX, y: t.clientY };
                 }}
                 onTouchMove={(e) => {
-                  if (e.touches.length === 2 && pinchStartDistRef.current && pinchStartZoomRef.current) {
+                  if (e.touches?.length === 2 && pinchStartDistRef.current && pinchStartZoomRef.current) {
                     // pinch-to-zoom
                     const a = e.touches[0];
                     const b = e.touches[1];
@@ -371,7 +376,11 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                     touchStartRef.current = null;
                     return;
                   }
-                  const t = e.changedTouches[0];
+                  const t = e.changedTouches?.[0];
+                  if (!t) {
+                    touchStartRef.current = null;
+                    return;
+                  }
                   const dx = t.clientX - touchStartRef.current.x;
                   const dy = t.clientY - touchStartRef.current.y;
                   touchStartRef.current = null;

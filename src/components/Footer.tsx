@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 const Footer = () => (
   <footer className="bg-primary text-primary-foreground">
     <div className="container mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Building2 className="h-7 w-7 text-secondary" />
@@ -44,6 +44,17 @@ const Footer = () => (
               </a>
             </li>
           </ul>
+        </div>
+        <div className="lg:col-span-1">
+          <h4 className="text-secondary font-display text-lg font-semibold mb-4">Coverage Map</h4>
+          <iframe
+            src="https://www.google.com/maps/d/u/0/embed?mid=1EsD7HRQ_Zwx9lTNz7glLtC8Hu-Terf0&ehbc=2E312F"
+            title="A TO Z Properties coverage map"
+            width="640"
+            height="480"
+            loading="lazy"
+            className="w-full h-64 rounded-md border-0"
+          />
         </div>
       </div>
       <div className="border-t border-primary-foreground/10 mt-8 pt-6 text-center text-xs text-primary-foreground/50 font-body">

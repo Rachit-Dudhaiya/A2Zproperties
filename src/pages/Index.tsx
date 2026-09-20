@@ -189,12 +189,14 @@ const Index = () => {
   };
 
   const handleMouseEnter = useCallback(() => {
+    if (featured.length <= 4 || !api || api.scrollSnapList().length < 2) return;
     api?.plugins()?.autoplay?.stop();
-  }, [api]);
+  }, [api, featured.length]);
 
   const handleMouseLeave = useCallback(() => {
+    if (featured.length <= 4 || !api || api.scrollSnapList().length < 2) return;
     api?.plugins()?.autoplay?.play();
-  }, [api]);
+  }, [api, featured.length]);
 
   const statsCards = [
     { label: "Properties Listed", value: stats.properties === null ? "—" : String(stats.properties), icon: Building },
@@ -325,10 +327,10 @@ const Index = () => {
               ))}
             </CarouselContent>
           </Carousel>
-        ) : featured.length > 0 && (
+        ) : featured.length > 0 ? (
           <Carousel
             setApi={setApi}
-            plugins={[plugin.current]}
+            plugins={featured.length > 4 ? [plugin.current] : []}
             opts={{
               align: "start",
               loop: featured.length > 4, // Loop if more than 4 properties, as that's the max visible on large screens
@@ -347,6 +349,10 @@ const Index = () => {
             <CarouselPrevious className="hidden sm:flex" />
             <CarouselNext className="hidden sm:flex" />
           </Carousel>
+        ) : (
+          <p className="text-center text-muted-foreground font-body py-8">
+            No featured properties are available right now.
+          </p>
         )}
         <div className="text-center mt-10">
           <Link to="/properties">

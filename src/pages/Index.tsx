@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
+  ArrowLeft,
   Phone,
   Building,
   Home,
@@ -96,18 +97,54 @@ const Index = () => {
   const [quickErrors, setQuickErrors] = useState<{ name?: string; phone?: string; requirement?: string }>({});
   const [quickLoading, setQuickLoading] = useState(false);
   const plugin = useRef(
-    Autoplay({ delay: 3500, stopOnInteraction: true })
+    Autoplay({ delay: 3500, stopOnInteraction: false, stopOnMouseEnter: true })
   );
   const [api, setApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!api) return;
+    setScrollSnaps(api.scrollSnapList());
+    setCurrentSlide(api.selectedScrollSnap());
+
+    const onSelect = () => {
+      setCurrentSlide(api.selectedScrollSnap());
+    };
+    api.on("select", onSelect);
+    api.on("reInit", () => {
+      setScrollSnaps(api.scrollSnapList());
+      setCurrentSlide(api.selectedScrollSnap());
+    });
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
 
   useEffect(() => {
     const fetchFeatured = async () => {
       if (!db) return;
       setFeaturedLoading(true);
       try {
+        // Query properties marked is_featured == true
         const q = query(collection(db, "properties"), where("is_featured", "==", true));
         const querySnapshot = await getDocs(q);
-        const propertiesList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        let propertiesList = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((p: any) => p.is_featured === true || p.is_featured === "true" || p.isFeatured === true);
+
+        // Fallback scan if where query returns 0 (handles missing Firestore index or field naming variations)
+        if (propertiesList.length === 0) {
+          try {
+            const allSnap = await getDocs(collection(db, "properties"));
+            propertiesList = allSnap.docs
+              .map((doc) => ({ id: doc.id, ...doc.data() }))
+              .filter((p: any) => p.is_featured === true || p.is_featured === "true" || p.isFeatured === true);
+          } catch (e) {
+            console.warn("Fallback featured scan failed:", e);
+          }
+        }
+
         const uniqueProperties = Array.from(new Map(propertiesList.map((p) => [p.id, p])).values());
         setFeatured(uniqueProperties);
       } catch (error) {
@@ -303,14 +340,18 @@ const Index = () => {
   };
 
   const handleMouseEnter = useCallback(() => {
-    if (featured.length <= 4 || !api || api.scrollSnapList().length < 2) return;
-    api?.plugins()?.autoplay?.stop();
-  }, [api, featured.length]);
+    if (!api) return;
+    try {
+      api.plugins()?.autoplay?.stop();
+    } catch {}
+  }, [api]);
 
   const handleMouseLeave = useCallback(() => {
-    if (featured.length <= 4 || !api || api.scrollSnapList().length < 2) return;
-    api?.plugins()?.autoplay?.play();
-  }, [api, featured.length]);
+    if (!api) return;
+    try {
+      api.plugins()?.autoplay?.play();
+    } catch {}
+  }, [api]);
 
   const trustStats = [
     { label: "Verified Listings", value: stats.properties === null ? "500+" : `${stats.properties}+`, icon: Building, desc: "Physically audited homes" },
@@ -350,9 +391,12 @@ const Index = () => {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white tracking-tight leading-[1.1] max-w-4xl"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white tracking-tight leading-[1.15] max-w-4xl"
           >
-            Find Your Sanctuary in <span className="text-gradient-gold">Rajkot</span>
+            Every Property, <span className="text-gradient-gold">A to Z.</span>
+            <span className="block text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium text-white/90 tracking-normal mt-2 sm:mt-3">
+              Residential • Commercial • Rajkot
+            </span>
           </motion.h1>
 
           {/* Sub-Copy */}
@@ -491,23 +535,16 @@ const Index = () => {
 
       {/* 3. Featured Properties Carousel */}
       <section className="section-padding container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-          <div className="text-left">
-            <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
-              Curated Selections
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-foreground mt-1">
-              Featured <span className="text-gradient-emerald">Properties</span>
-            </h2>
-            <p className="mt-2 text-muted-foreground font-body text-sm sm:text-base max-w-xl">
-              Handpicked residences and prime commercial locations across Rajkot's finest neighborhoods.
-            </p>
-          </div>
-          <Link to="/properties">
-            <Button variant="outline" className="font-body text-sm">
-              View All Properties <ArrowRight className="ml-2 h-4 w-4 text-accent" />
-            </Button>
-          </Link>
+        <div className="mb-8 sm:mb-10 text-left">
+          <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" /> Curated Selections
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-foreground mt-1">
+            Featured <span className="text-gradient-emerald">Properties</span>
+          </h2>
+          <p className="mt-2 text-muted-foreground font-body text-sm sm:text-base max-w-xl">
+            Handpicked residences and prime commercial locations across Rajkot's finest neighborhoods.
+          </p>
         </div>
 
         {featuredLoading ? (
@@ -516,33 +553,73 @@ const Index = () => {
               <SkeletonCard key={i} />
             ))}
           </div>
-        ) : featured.length > 0 ? (
-          <Carousel
-            setApi={setApi}
-            plugins={featured.length > 4 ? [plugin.current] : []}
-            opts={{
-              align: "start",
-              loop: featured.length > 4,
-            }}
-            className="w-full"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <CarouselContent className="-ml-4 sm:-ml-6">
-              {featured.map((p, i) => (
-                <CarouselItem key={p.id} className="pl-4 sm:pl-6 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                  <PropertyCard property={p} index={i} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden sm:flex -left-4 bg-card shadow-md border-border" />
-            <CarouselNext className="hidden sm:flex -right-4 bg-card shadow-md border-border" />
-          </Carousel>
+        ) : featured.length === 1 ? (
+          <div className="max-w-sm sm:max-w-md mx-auto">
+            <PropertyCard property={featured[0]} index={0} />
+          </div>
+        ) : featured.length > 1 ? (
+          <div className="relative group/carousel">
+            <Carousel
+              setApi={setApi}
+              plugins={[plugin.current]}
+              opts={{
+                align: "start",
+                loop: featured.length > 1,
+              }}
+              className="w-full"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <CarouselContent className="-ml-4 sm:-ml-5">
+                {featured.map((p, i) => (
+                  <CarouselItem
+                    key={p.id}
+                    className={`pl-4 sm:pl-5 ${
+                      featured.length === 2
+                        ? "basis-full sm:basis-1/2 max-w-lg"
+                        : featured.length === 3
+                        ? "basis-full sm:basis-1/2 lg:basis-1/3"
+                        : "basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                    }`}
+                  >
+                    <PropertyCard property={p} index={i} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+
+            {/* Pagination Indicator Dots */}
+            {scrollSnaps.length > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                {scrollSnaps.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => api?.scrollTo(idx)}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      currentSlide === idx
+                        ? "w-8 bg-accent"
+                        : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                    }`}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
-          <div className="p-12 text-center rounded-2xl bg-card border border-border">
-            <p className="text-muted-foreground font-body">No featured properties available right now.</p>
-            <Link to="/properties" className="mt-4 inline-block">
-              <Button variant="outline">Browse All Listings</Button>
+          <div className="p-12 text-center rounded-3xl bg-card border border-border shadow-xs max-w-lg mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <h3 className="font-display font-bold text-lg text-foreground mb-1">No Featured Properties Yet</h3>
+            <p className="text-muted-foreground font-body text-sm mb-4">
+              Properties marked as "Feature on Homepage Carousel" in the Admin Portal will appear here.
+            </p>
+            <Link to="/properties">
+              <Button variant="outline" className="text-sm">
+                Browse All Properties <ArrowRight className="ml-1.5 h-4 w-4 text-accent" />
+              </Button>
             </Link>
           </div>
         )}

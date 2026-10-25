@@ -21,7 +21,6 @@
     "noUnusedParameters": false,
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
-    "ignoreDeprecations": "6.0",
 
     "baseUrl": ".",
     "paths": {

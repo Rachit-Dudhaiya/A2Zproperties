@@ -7,12 +7,24 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1.5rem",
       screens: {
-        "2xl": "1400px",
+        "2xl": "1280px",
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', "sans-serif"],
+        display: ['"Playfair Display"', "serif"],
+        serif: ['"Playfair Display"', "serif"],
+      },
+      boxShadow: {
+        subtle: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        card: "0 1px 3px rgba(0, 0, 0, 0.04), 0 12px 32px -12px rgba(15, 61, 46, 0.08)",
+        "card-hover": "0 8px 24px -4px rgba(15, 61, 46, 0.12), 0 20px 40px -12px rgba(0, 0, 0, 0.08)",
+        glass: "0 8px 32px 0 rgba(15, 61, 46, 0.08)",
+        glow: "0 0 24px rgba(201, 162, 39, 0.25)",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

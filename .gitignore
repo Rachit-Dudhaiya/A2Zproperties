@@ -29,3 +29,7 @@ serviceAccountKey.json
 *.sln
 *.sw?
 .vercel
+.agents/skills/antigravity-design-expert/SKILL.md
+.agents/skills/web-design-guidelines/SKILL.md
+.agents/skills/antigravity-design-expert/SKILL.md
+.agents/skills/web-design-guidelines/SKILL.md

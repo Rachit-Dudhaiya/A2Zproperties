@@ -1,19 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, BedDouble, Bath, Maximize, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
+import { MapPin, BedDouble, Bath, Maximize, ZoomIn, ZoomOut, RefreshCw, Calendar, Sparkles, Instagram } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { formatPrice } from "@/lib/data";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 /**
  * If the URL is from Cloudinary, it inserts image optimization parameters.
  * This requests a smaller, auto-formatted, and auto-quality image for previews.
- * @param url The original image URL.
- * @param options.width The target width of the image.
- * @param options.height The target height of the image.
- * @returns The optimized image URL or the original URL if not from Cloudinary.
  */
 const getOptimizedUrl = (url: string, options: { width: number; height: number }) => {
   if (url && url.includes('res.cloudinary.com')) {
@@ -40,6 +36,10 @@ interface PropertyData {
   image_url?: string | null;
   agent_avatar?: string | null;
   agent_name?: string | null;
+  video_url?: string | null;
+  instagram_reel_url?: string | null;
+  walkthrough_url?: string | null;
+  has_walkthrough?: boolean | null;
 }
 
 interface Props {
@@ -71,7 +71,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
 
   const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-  const getMaxPan = () => {
+  const getMaxPan = useCallback(() => {
     const c = containerRef.current;
     const img = imgRef.current;
     if (!c || !img || !naturalSize) return { maxX: 0, maxY: 0 };
@@ -79,7 +79,6 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
     const ch = c.clientHeight;
     const nw = naturalSize.w;
     const nh = naturalSize.h;
-    // base fit scale (object-contain)
     const baseScale = Math.min(cw / nw, ch / nh);
     const baseW = nw * baseScale;
     const baseH = nh * baseScale;
@@ -88,7 +87,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
     const maxX = Math.max(0, (scaledW - cw) / 2);
     const maxY = Math.max(0, (scaledH - ch) / 2);
     return { maxX, maxY };
-  };
+  }, [naturalSize, zoom]);
 
   const images: string[] = Array.isArray(property.images) && property.images.length > 0
     ? property.images
@@ -106,6 +105,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
   };
 
   const imgSrc = getImageSrc(property);
+  const walkthroughUrl = property.instagram_reel_url || property.video_url || property.walkthrough_url || null;
 
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
@@ -121,7 +121,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
     }
   };
 
-  // keyboard navigation for viewer must be a top-level hook (not conditional)
+  // Keyboard navigation for lightbox viewer
   useEffect(() => {
     if (!viewerOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -142,7 +142,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
     return () => window.removeEventListener('keydown', onKey);
   }, [viewerOpen, images.length]);
 
-  // reset zoom when opening viewer or changing image
+  // Reset zoom when opening viewer or changing image
   useEffect(() => {
     if (viewerOpen) setZoom(1);
     setPanX(0);
@@ -151,103 +151,189 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
     setIsPanning(false);
   }, [viewerOpen, viewerIndex]);
 
-  // clamp pan when zoom or measurements change
+  // Clamp pan when zoom or measurements change
   useEffect(() => {
     const { maxX, maxY } = getMaxPan();
     setPanX((px) => clamp(px, -maxX, maxX));
     setPanY((py) => clamp(py, -maxY, maxY));
-  }, [zoom, naturalSize]);
+  }, [zoom, naturalSize, getMaxPan]);
 
   return (
-  <motion.div
-    initial={{ opacity: 0, y: 24 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.08, duration: 0.5 }}
-  >
-    <div className="group">
-      <div
-        className="bg-card rounded-lg overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 group-hover:-translate-y-1 cursor-pointer"
-        role="button"
-        tabIndex={0}
-        aria-label={`Open ${property.title} details`}
-        onClick={handleCardClick}
-        onKeyDown={handleCardKeyDown}
-      >
-        <div className="relative h-48 bg-muted flex items-center justify-center overflow-hidden">
-          {Array.isArray(property.images) && property.images.length > 1 ? (
-            <Carousel className="h-full">
-              <CarouselPrevious />
-              <CarouselNext />
-              <CarouselContent className="h-full">
-                {property.images.map((src: string, i: number) => (
-                  <CarouselItem key={i} className="h-48">
-                    {src ? <img src={getOptimizedUrl(src, { width: 400, height: 240 })} alt={`${property.title}-${i}`} className="w-full h-48 object-cover" loading="lazy" /> : <div className="h-48 bg-hero opacity-20 flex items-center justify-center text-muted-foreground">No image</div>}
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-          ) : (imgSrc && !imgError ? (
-            <img src={getOptimizedUrl(imgSrc, { width: 400, height: 240 })} alt={property.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={() => setImgError(true)} />
-          ) : (
-            <div className="absolute inset-0 bg-hero opacity-20 flex items-center justify-center text-muted-foreground">No image</div>
-          ))}
-          <div className="absolute top-1 left-1 sm:top-3 sm:left-3 flex gap-2 z-40">
-            <Badge className="bg-secondary text-secondary-foreground font-body text-xs">{property.status}</Badge>
-            <Badge variant="outline" className="bg-card/80 font-body text-xs">{property.type}</Badge>
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="h-full"
+    >
+      <div className="group h-full flex flex-col">
+        <div
+          className="bg-card rounded-2xl overflow-hidden border border-border/80 shadow-card hover:shadow-card-hover transition-all duration-300 group-hover:-translate-y-1.5 cursor-pointer flex flex-col h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          role="button"
+          tabIndex={0}
+          aria-label={`Open details for ${property.title}`}
+          onClick={handleCardClick}
+          onKeyDown={handleCardKeyDown}
+        >
+          {/* 16:10 Ratio Image Container with Hover Zoom */}
+          <div className="relative aspect-[16/10] w-full bg-muted/60 overflow-hidden">
+            {Array.isArray(property.images) && property.images.length > 1 ? (
+              <Carousel className="w-full h-full">
+                <CarouselPrevious className="left-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 h-8 w-8 bg-black/50 text-white border-0 hover:bg-black/70" />
+                <CarouselNext className="right-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 h-8 w-8 bg-black/50 text-white border-0 hover:bg-black/70" />
+                <CarouselContent className="h-full ml-0">
+                  {property.images.map((src: string, i: number) => (
+                    <CarouselItem key={i} className="pl-0 h-full">
+                      {src ? (
+                        <img
+                          src={getOptimizedUrl(src, { width: 500, height: 312 })}
+                          alt={`${property.title} view ${i + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted">No image</div>
+                      )}
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            ) : imgSrc && !imgError ? (
+              <img
+                src={getOptimizedUrl(imgSrc, { width: 500, height: 312 })}
+                alt={property.title}
+                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                loading="lazy"
+                decoding="async"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/80">
+                <span className="text-xs uppercase tracking-wider font-mono">No photo preview</span>
+              </div>
+            )}
+
+            {/* Gradient Overlay on bottom of image for readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+
+            {/* Floating Top Badges */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 z-20">
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide uppercase shadow-sm bg-primary text-primary-foreground border border-primary-foreground/20 backdrop-blur-md">
+                {property.status}
+              </span>
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide shadow-sm bg-white/85 dark:bg-card/85 text-foreground backdrop-blur-md border border-white/40 dark:border-white/10">
+                {property.type}
+              </span>
+            </div>
+
+            {property.is_featured && (
+              <div className="absolute top-3 right-3 z-20">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide uppercase shadow-sm bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 border border-amber-300">
+                  <Sparkles className="h-3 w-3 fill-current" />
+                  Featured
+                </span>
+              </div>
+            )}
+
+            {/* Floating Price Pill Bottom-Left */}
+            <div className="absolute bottom-3 left-3 z-20">
+              <div className="px-3 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-md">
+                <span className="font-display font-bold text-base sm:text-lg tracking-tight">
+                  {formatPrice(property.price)}
+                </span>
+                {property.status === "For Rent" && (
+                  <span className="text-xs font-normal text-white/80 ml-1">/mo</span>
+                )}
+              </div>
+            </div>
+
+            {/* Floating Expand Trigger Bottom-Right */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 z-20">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewerIndex(0);
+                  setViewerOpen(true);
+                }}
+                className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 transition-all focus:outline-none focus:ring-2 focus:ring-accent"
+                aria-label="Expand photo viewer"
+                title="View full gallery"
+              >
+                <Maximize className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
-          {property.is_featured && (
-            <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground font-body text-xs">Featured</Badge>
-          )}
-          <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-1 rounded text-lg font-semibold">
-            {formatPrice(property.price)}
-          </div>
-          {/* agent avatar overlay + view button */}
-          <div className="absolute bottom-1 right-1 sm:bottom-3 sm:right-3 flex items-center gap-2 z-40">
-            <button onClick={(e) => { e.stopPropagation(); setViewerIndex(0); setViewerOpen(true); }} className="bg-white/90 p-2 sm:p-2 rounded text-sm" aria-label="View images">
-              <Maximize className="h-4 w-4" />
-            </button>
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-              {property.agent_avatar ? (
-                <img src={property.agent_avatar} alt={property.agent_name || 'ATOZ PROPERTIES'} className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-xs text-muted-foreground">AZ</div>
+
+          {/* Card Body */}
+          <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3">
+            <div>
+              <h3 className="font-display text-lg font-bold text-card-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                {property.title}
+              </h3>
+
+              {property.location && (
+                <div className="flex items-center gap-1.5 mt-1 text-muted-foreground text-xs sm:text-sm font-body line-clamp-1">
+                  <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
+                  <span>{property.location}</span>
+                </div>
               )}
             </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-display text-lg font-semibold text-card-foreground line-clamp-1 group-hover:text-secondary transition-colors">
-            {property.title}
-          </h3>
-          {property.location && (
-            <div className="flex items-center gap-1 mt-1 text-muted-foreground text-sm font-body">
-              <MapPin className="h-3.5 w-3.5" /> {property.location}
+
+            {/* Meta Row: Beds / Baths / Sqft Pills */}
+            <div className="flex items-center gap-2 pt-1 border-t border-border/60 text-xs text-muted-foreground font-body">
+              {property.bedrooms && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60 font-medium">
+                  <BedDouble className="h-3.5 w-3.5 text-primary" /> {property.bedrooms} BHK
+                </span>
+              )}
+              {property.bathrooms && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60 font-medium">
+                  <Bath className="h-3.5 w-3.5 text-primary" /> {property.bathrooms} Bath
+                </span>
+              )}
+              {property.area && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60 font-medium ml-auto">
+                  {property.area} sqft
+                </span>
+              )}
             </div>
-          )}
-          <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground font-body">
-            {property.bedrooms && (
-              <span className="flex items-center gap-1"><BedDouble className="h-4 w-4" /> {property.bedrooms} BHK</span>
-            )}
-            {property.bathrooms && (
-              <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {property.bathrooms}</span>
-            )}
-            {/* removed super built-up / area display as requested */}
-          </div>
-          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-            <span className="text-lg font-display font-bold text-secondary">
-              {formatPrice(property.price)}
-              {property.status === "For Rent" && <span className="text-sm font-body text-muted-foreground">/mo</span>}
-            </span>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-              <div className="text-sm text-muted-foreground">ATOZ PROPERTIES</div>
-              <Link to={`/book?propertyId=${property.id}`} onClick={(e) => e.stopPropagation()}>
-                <Button size="sm" className="w-full sm:w-auto bg-secondary text-secondary-foreground hover:bg-secondary/90">Book Site Visit</Button>
+
+            {/* Footer Row with Book Visit & View Walkthrough */}
+            <div className="pt-2 flex items-center justify-between gap-2">
+              {walkthroughUrl ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(walkthroughUrl, "_blank", "noopener,noreferrer");
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/25 hover:from-pink-500/20 hover:border-pink-500/50 hover:scale-[1.02] active:scale-95 transition-all shadow-xs cursor-pointer"
+                  title="Watch Instagram Walkthrough Reel"
+                >
+                  <Instagram className="h-3.5 w-3.5 text-pink-500 shrink-0" />
+                  <span>View Walkthrough</span>
+                </button>
+              ) : (
+                <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Verified Listing
+                </div>
+              )}
+              <Link
+                to={`/book?propertyId=${property.id}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  size="sm"
+                  className="h-8 px-3 text-xs bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-xs"
+                >
+                  <Calendar className="h-3 w-3 mr-1" />
+                  Book Visit
+                </Button>
               </Link>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
     {/* Image viewer modal (lightbox) */}
     {viewerOpen && images.length > 0 && (

@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MapPin, Maximize, Phone, CheckCircle2, Clock, IndianRupee, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
+import { ArrowLeft, MapPin, Maximize, Phone, CheckCircle2, Clock, IndianRupee, ZoomIn, ZoomOut, RefreshCw, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { formatPrice, VISIT_CHARGE, MAX_PROPERTIES_PER_VISIT, PHONE_NUMBER, UPI_
 import PropertyDetailSkeleton from "@/components/PropertyDetailSkeleton";
 import { motion } from "framer-motion";
 import { openBookingWhatsApp } from "@/lib/whatsapp";
+import PropertyCard from "@/components/PropertyCard";
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -96,6 +97,31 @@ const PropertyDetail = () => {
     return () => { cancelled = true; };
   }, [id, toast]);
 
+  const similarProperties = useMemo(() => {
+    if (!property || !allProperties.length) return [];
+    const currentType = (property.type || "").toString().trim().toLowerCase();
+
+    const normalizeType = (t: string) => {
+      const lower = t.toLowerCase();
+      if (/flat|apartment|bhk|residential|penthouse|studio/.test(lower)) return "flat";
+      if (/bungalow|villa|tenement|row house|independent house/.test(lower)) return "bungalow";
+      if (/commercial|shop|retail|showroom/.test(lower)) return "commercial";
+      if (/office|corporate|workspace/.test(lower)) return "office";
+      if (/plot|land|industrial land/.test(lower)) return "plot";
+      return lower;
+    };
+
+    const targetCategory = normalizeType(currentType);
+
+    return allProperties.filter((p) => {
+      if (p.id === property.id) return false;
+      const otherCategory = normalizeType((p.type || "").toString().trim());
+      if (targetCategory && otherCategory === targetCategory) return true;
+      if (currentType && (p.type || "").toString().toLowerCase().includes(currentType)) return true;
+      return false;
+    });
+  }, [property, allProperties]);
+
   useEffect(() => {
     // if URL has #booking, scroll to booking form
     if (location.hash === "#booking") {
@@ -126,7 +152,7 @@ const PropertyDetail = () => {
 
   const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-  const getMaxPan = () => {
+  const getMaxPan = useCallback(() => {
     const c = containerRef.current;
     const img = imgRef.current;
     if (!c || !img || !naturalSize) return { maxX: 0, maxY: 0 };
@@ -143,7 +169,7 @@ const PropertyDetail = () => {
     const maxX = Math.max(0, (scaledW - cw) / 2);
     const maxY = Math.max(0, (scaledH - ch) / 2);
     return { maxX, maxY };
-  };
+  }, [naturalSize, zoom]);
 
   const summaryLine = useMemo(() => {
     if (!property) return "";
@@ -262,7 +288,7 @@ const PropertyDetail = () => {
     const { maxX, maxY } = getMaxPan();
     setPanX((px) => clamp(px, -maxX, maxX));
     setPanY((py) => clamp(py, -maxY, maxY));
-  }, [zoom, naturalSize]);
+  }, [getMaxPan]);
 
   const handlePaymentScreenshotChange = (file: File | null) => {
     if (!file) {
@@ -528,49 +554,116 @@ const PropertyDetail = () => {
               <div className="mt-6">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">{property.title}</h1>
+                    <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
+                      {property.type} • {property.status}
+                    </span>
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mt-1">
+                      {property.title}
+                    </h1>
                     {(property.location || property.address) && (
-                      <div className="flex items-center gap-2 mt-2 text-muted-foreground font-body">
-                        <MapPin className="h-4 w-4" /> {property.location || property.address}
+                      <div className="flex items-center gap-2 mt-2 text-muted-foreground font-body text-sm sm:text-base">
+                        <MapPin className="h-4 w-4 text-accent shrink-0" /> {property.location || property.address}
                       </div>
                     )}
-                    {summaryLine && (
-                      <div className="mt-2 text-sm text-muted-foreground font-body">{summaryLine}</div>
+
+                    {(property.video_url || property.instagram_reel_url || property.walkthrough_url) && (
+                      <div className="mt-3">
+                        <a
+                          href={property.video_url || property.instagram_reel_url || property.walkthrough_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/30 hover:border-pink-500/60 hover:scale-[1.02] active:scale-95 transition-all shadow-xs"
+                          title="Watch Property Walkthrough on Instagram"
+                        >
+                          <Instagram className="h-4 w-4 text-pink-500" />
+                          <span>View Walkthrough Video (Instagram Reel)</span>
+                        </a>
+                      </div>
                     )}
                   </div>
-                  <div className="text-2xl md:text-3xl font-display font-bold text-secondary">
-                    {formatPrice(property.price)}
-                    {property.status === "For Rent" && <span className="text-base font-body text-muted-foreground">/month</span>}
+                  <div className="text-left md:text-right">
+                    <div className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-accent">
+                      {formatPrice(property.price)}
+                      {property.status === "For Rent" && (
+                        <span className="text-sm font-body text-muted-foreground ml-1">/month</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+                      Verified Rental
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-6 border-t border-border pt-6">
-                  <h3 className="text-lg font-display font-semibold text-foreground mb-4">Details</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm font-body">
+                {/* Key Facts Quick Pills */}
+                <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {property.bedrooms && (
+                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
+                      <div className="text-xs text-muted-foreground font-body">Bedrooms</div>
+                      <div className="text-base font-display font-bold text-foreground mt-0.5">{property.bedrooms} BHK</div>
+                    </div>
+                  )}
+                  {property.bathrooms && (
+                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
+                      <div className="text-xs text-muted-foreground font-body">Bathrooms</div>
+                      <div className="text-base font-display font-bold text-foreground mt-0.5">{property.bathrooms} Bath</div>
+                    </div>
+                  )}
+                  {(property.area || property.carpet_area || property.carpetArea) && (
+                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
+                      <div className="text-xs text-muted-foreground font-body">Carpet Area</div>
+                      <div className="text-base font-display font-bold text-foreground mt-0.5">
+                        {property.carpet_area || property.carpetArea || property.area} sqft
+                      </div>
+                    </div>
+                  )}
+                  {(property.furnishing || property.furnished) && (
+                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
+                      <div className="text-xs text-muted-foreground font-body">Furnishing</div>
+                      <div className="text-base font-display font-bold text-foreground mt-0.5">
+                        {property.furnishing || property.furnished}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Detailed Specifications Table */}
+                <div className="mt-8 bg-card rounded-2xl p-6 border border-border shadow-card">
+                  <h3 className="text-xl font-display font-bold text-foreground mb-4">
+                    Property Specifications
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm font-body">
                     {detailItems.map((item) => (
-                      <div key={item.label} className="flex items-center justify-between gap-3 border-b border-border pb-2">
+                      <div key={item.label} className="flex items-center justify-between py-2 border-b border-border/60">
                         <span className="text-muted-foreground">{item.label}</span>
-                        <span className="text-card-foreground font-medium text-right">{item.value}</span>
+                        <span className="font-semibold text-foreground text-right">{item.value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
+                {/* Description */}
                 {property.description && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-display font-semibold text-foreground mb-2">Description</h3>
-                    <p className="text-muted-foreground font-body leading-relaxed">{property.description}</p>
+                  <div className="mt-8 bg-card rounded-2xl p-6 border border-border shadow-card">
+                    <h3 className="text-xl font-display font-bold text-foreground mb-3">About This Property</h3>
+                    <p className="text-muted-foreground font-body leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                      {property.description}
+                    </p>
                   </div>
                 )}
 
+                {/* Features & Amenities */}
                 {property.features && property.features.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-display font-semibold text-foreground mb-3">Features & Amenities</h3>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="mt-8 bg-card rounded-2xl p-6 border border-border shadow-card">
+                    <h3 className="text-xl font-display font-bold text-foreground mb-4">Features & Amenities</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {property.features.map((f: string) => (
-                        <span key={f} className="flex items-center gap-1 bg-secondary/10 text-secondary-foreground font-body text-sm px-3 py-1.5 rounded-full">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-secondary" /> {f}
-                        </span>
+                        <div
+                          key={f}
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/50 border border-border/50 text-foreground text-sm font-body"
+                        >
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="truncate">{f}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -579,36 +672,108 @@ const PropertyDetail = () => {
             </motion.div>
           </div>
 
-          {/* Booking form */}
+          {/* Sticky Agent & Booking Sidebar */}
           <div>
-            <motion.div id="booking" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-              className="bg-card rounded-lg p-6 shadow-card sticky top-24">
-              <h3 className="text-xl font-display font-bold text-card-foreground mb-1">Book a Site Visit</h3>
-              <div className="flex items-center gap-2 mb-4">
-                <Badge className="bg-secondary/10 text-secondary font-body text-xs">
-                  <IndianRupee className="h-3 w-3 mr-0.5" /> {VISIT_CHARGE} Visit Charge
-                </Badge>
-                <Badge variant="outline" className="font-body text-xs">Max {MAX_PROPERTIES_PER_VISIT} Properties</Badge>
+            <motion.div
+              id="booking"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-card rounded-2xl p-6 border border-border shadow-card sticky top-24 space-y-6"
+            >
+              {/* Agent Profile Strip */}
+              <div className="flex items-center gap-3.5 pb-4 border-b border-border">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-display font-bold text-primary text-lg">
+                  AZ
+                </div>
+                <div>
+                  <h4 className="font-display font-bold text-base text-card-foreground">
+                    A TO Z Properties
+                  </h4>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    Official Advisory Desk • Rajkot
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground font-body">
-                  Book using the full booking form to select a slot and upload payment proof.
+              {/* Visit Charge Pill */}
+              <div className="p-4 rounded-xl bg-muted/60 border border-border space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Site Visit Charge
+                  </span>
+                  <span className="font-display font-bold text-lg text-foreground">
+                    ₹{VISIT_CHARGE}
+                  </span>
                 </div>
-                <Link to={`/book?propertyId=${property.id}`}>
-                  <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 font-body">
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  Tour up to 3 shortlisted properties accompanied by our senior advisor.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2.5">
+                <Link to={`/book?propertyId=${property.id}`} className="block">
+                  <Button className="w-full h-12 bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-md text-sm">
                     Book Site Visit
                   </Button>
                 </Link>
-                <div className="text-center">
-                  <ContactMenu phone={PHONE_NUMBER} className="inline-block">
-                    <Button variant="ghost" className="text-sm font-body text-secondary"><Phone className="h-3.5 w-3.5 mr-1" /> {PHONE_NUMBER}</Button>
-                  </ContactMenu>
-                </div>
+
+                <a
+                  href={`https://wa.me/91${PHONE_NUMBER}?text=${encodeURIComponent(
+                    `Hello A TO Z Properties, I am interested in viewing: ${property.title} (ID: ${property.id})`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button variant="outline" className="w-full h-11 border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-semibold text-sm">
+                    WhatsApp Inquiry
+                  </Button>
+                </a>
+
+                <ContactMenu phone={PHONE_NUMBER} className="block w-full">
+                  <Button variant="ghost" className="w-full h-10 text-muted-foreground hover:text-foreground text-xs">
+                    <Phone className="h-3.5 w-3.5 mr-1.5 text-accent" /> Direct Call: +91 {PHONE_NUMBER}
+                  </Button>
+                </ContactMenu>
+              </div>
+
+              <div className="pt-2 text-center text-[11px] text-muted-foreground font-body">
+                Available slots: 10:00 AM – 1:00 PM & 4:00 PM – 10:00 PM
               </div>
             </motion.div>
           </div>
         </div>
+
+        {/* Similar Properties Row (Filtered by Category / Type) */}
+        {similarProperties.length > 0 && (
+          <section className="mt-16 pt-12 border-t border-border">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
+                  Matching Category
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mt-1">
+                  Similar Verified {property?.type ? `${property.type}s` : "Properties"}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Showing verified {property?.type || "properties"} available across Rajkot
+                </p>
+              </div>
+              <Link to={`/properties?type=${encodeURIComponent(property?.type || "")}`}>
+                <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                  Explore All {property?.type ? `${property.type}s` : "Properties"}
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {similarProperties.slice(0, 3).map((similar, i) => (
+                <PropertyCard key={similar.id} property={similar} index={i} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
       {/* <div className="fixed bottom-6 right-6 z-50 text-black bg-white/30 backdrop-blur-sm p-2 rounded-lg text-xs font-bold opacity-70 pointer-events-none">
         A to Z Properties

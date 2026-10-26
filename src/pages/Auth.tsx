@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowRight, ShieldCheck, ArrowLeft, PhoneCall } from "lucide-react";
+import {
+  Building2,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldCheck,
+  ArrowLeft,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +26,14 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Email / Password Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nextErrors: { email?: string; password?: string; fullName?: string } = {};
@@ -72,11 +84,53 @@ const Auth = () => {
     }
   };
 
-  const handleAlternateLogin = (provider: string) => {
-    toast({
-      title: `${provider} Login`,
-      description: "Direct email and password login is currently active for this rental portal.",
-    });
+  // Google Sign-In Handler
+  const handleGoogleSignIn = async () => {
+    // If user accessed via 127.0.0.1, switch to localhost (which Firebase allows by default)
+    if (typeof window !== "undefined" && window.location.hostname === "127.0.0.1") {
+      toast({
+        title: "Redirecting to localhost...",
+        description: "Firebase requires 'localhost' instead of '127.0.0.1' for Google Sign-In.",
+      });
+      const url = new URL(window.location.href);
+      url.hostname = "localhost";
+      window.location.href = url.toString();
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      const { error, user } = await signInWithGoogle();
+      if (error) {
+        if (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request") {
+          return;
+        }
+        throw error;
+      }
+      toast({
+        title: "Welcome to A TO Z Properties!",
+        description: `Signed in as ${user?.displayName || user?.email || "User"}.`,
+      });
+      navigate("/");
+    } catch (err: any) {
+      console.error("Google sign-in error:", err);
+      let desc = err?.message || "Could not complete Google sign in.";
+
+      if (err?.code === "auth/unauthorized-domain") {
+        const host = typeof window !== "undefined" ? window.location.hostname : "your domain";
+        desc = `Domain '${host}' is not added in Firebase Console. Go to Firebase Console > Authentication > Settings > Authorized domains > Add '${host}'.`;
+      } else if (err?.code === "auth/operation-not-allowed") {
+        desc = "Google Sign-In is not enabled in Firebase Console. Please enable Google provider in Firebase Authentication > Sign-in method.";
+      }
+
+      toast({
+        title: "Google Sign-In Notice",
+        description: desc,
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -127,7 +181,7 @@ const Auth = () => {
                   setIsLogin(true);
                   setErrors({});
                 }}
-                className={`py-2 rounded-lg transition-all ${
+                className={`py-2 rounded-lg transition-all cursor-pointer ${
                   isLogin
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -141,7 +195,7 @@ const Auth = () => {
                   setIsLogin(false);
                   setErrors({});
                 }}
-                className={`py-2 rounded-lg transition-all ${
+                className={`py-2 rounded-lg transition-all cursor-pointer ${
                   !isLogin
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -211,7 +265,7 @@ const Auth = () => {
                         description: "Please contact our support team at +91 94285 24072 for credential reset assistance.",
                       })
                     }
-                    className="text-[11px] font-semibold text-primary hover:underline"
+                    className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
                   >
                     Forgot Password?
                   </button>
@@ -232,7 +286,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3.5 top-3.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -244,7 +298,7 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-accent text-accent-foreground font-semibold shadow-md mt-2"
+              className="w-full h-11 bg-accent text-accent-foreground font-semibold shadow-md mt-2 cursor-pointer"
             >
               {loading ? (
                 "Authenticating..."
@@ -262,7 +316,7 @@ const Auth = () => {
             </Button>
           </form>
 
-          {/* Alternative Social / Phone Options */}
+          {/* Alternative Social Login with Google */}
           <div className="mt-6 pt-6 border-t border-border">
             <div className="relative text-center mb-4">
               <span className="bg-card px-3 text-[11px] font-medium text-muted-foreground">
@@ -270,11 +324,12 @@ const Auth = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div>
               <button
                 type="button"
-                onClick={() => handleAlternateLogin("Google")}
-                className="h-10 rounded-xl border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-medium flex items-center justify-center gap-2 transition-colors"
+                onClick={handleGoogleSignIn}
+                disabled={googleLoading}
+                className="w-full h-11 rounded-xl border border-border bg-background hover:bg-muted/60 text-foreground text-xs sm:text-sm font-semibold flex items-center justify-center gap-2.5 transition-all active:scale-95 shadow-2xs hover:shadow-subtle cursor-pointer"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -294,16 +349,7 @@ const Auth = () => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>Google</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleAlternateLogin("Phone SMS")}
-                className="h-10 rounded-xl border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-medium flex items-center justify-center gap-2 transition-colors"
-              >
-                <PhoneCall className="h-4 w-4 text-emerald-600" />
-                <span>Phone OTP</span>
+                <span>{googleLoading ? "Connecting with Google..." : "Continue with Google"}</span>
               </button>
             </div>
           </div>

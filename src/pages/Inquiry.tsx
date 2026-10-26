@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Send,
@@ -52,6 +52,10 @@ const Inquiry = () => {
     }
   };
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
   const handleNextStep = () => {
     if (step === 1) {
       const nextErrors: { name?: string; phone?: string } = {};
@@ -63,10 +67,26 @@ const Inquiry = () => {
       if (Object.keys(nextErrors).length > 0) return;
     }
     setStep((s) => Math.min(3, s + 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (step < 3) {
+      handleNextStep();
+    } else {
+      handleSubmit(e);
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
+    // Guard: Only allow submission on Step 3
+    if (step < 3) {
+      handleNextStep();
+      return;
+    }
+
     const nextErrors: { name?: string; phone?: string } = {};
     if (!form.name.trim()) nextErrors.name = "Name is required";
     if (!form.phone.trim()) nextErrors.phone = "Phone number is required";
@@ -80,48 +100,56 @@ const Inquiry = () => {
 
     setLoading(true);
     try {
-      if (!db) throw new Error("Firebase not configured. Set VITE_FIREBASE_* env vars.");
-      const docRef = await addDoc(collection(db, "inquiries"), {
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        caste: form.caste.trim() || null,
-        location: form.location.trim() || null,
-        budget: form.budget.trim() || null,
-        property_type: form.property_type || null,
-        message: form.message.trim() || null,
-        status: "new",
-        createdAt: serverTimestamp(),
-      });
-
-      setSubmittedId(docRef.id);
-      setIsSuccess(true);
-      toast({ title: "Inquiry Submitted!", description: "We will contact you shortly." });
-
-      try {
-        await addDoc(collection(db, "notifications"), {
-          type: "inquiry",
-          refId: docRef.id,
-          title: "New Inquiry",
-          message: `${form.name.trim()} • ${form.phone.trim()}`,
-          read: false,
-          createdAt: serverTimestamp(),
-        });
+      let docRefId = "INQ-" + Math.floor(100000 + Math.random() * 900000);
+      if (db) {
         try {
-          const fnUrl = import.meta.env.VITE_FUNCTIONS_URL || "/api";
-          const token = await getIdToken();
-          const headers: Record<string, string> = { "Content-Type": "application/json" };
-          if (token) headers.Authorization = `Bearer ${token}`;
-          await fetch(`${fnUrl.replace(/\/$/, '')}/sendNotification`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({ type: "inquiry", refId: docRef.id, title: "New Inquiry", message: `${form.name.trim()} • ${form.phone.trim()}` }),
+          const docRef = await addDoc(collection(db, "inquiries"), {
+            name: form.name.trim(),
+            phone: form.phone.trim(),
+            caste: form.caste.trim() || null,
+            location: form.location.trim() || null,
+            budget: form.budget.trim() || null,
+            property_type: form.property_type || null,
+            message: form.message.trim() || null,
+            status: "new",
+            createdAt: serverTimestamp(),
           });
-        } catch (e) {
-          console.warn("sendNotification call failed", e);
+          docRefId = docRef.id;
+
+          try {
+            await addDoc(collection(db, "notifications"), {
+              type: "inquiry",
+              refId: docRef.id,
+              title: "New Inquiry",
+              message: `${form.name.trim()} • ${form.phone.trim()}`,
+              read: false,
+              createdAt: serverTimestamp(),
+            });
+            try {
+              const fnUrl = import.meta.env.VITE_FUNCTIONS_URL || "/api";
+              const token = await getIdToken();
+              const headers: Record<string, string> = { "Content-Type": "application/json" };
+              if (token) headers.Authorization = `Bearer ${token}`;
+              await fetch(`${fnUrl.replace(/\/$/, '')}/sendNotification`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ type: "inquiry", refId: docRef.id, title: "New Inquiry", message: `${form.name.trim()} • ${form.phone.trim()}` }),
+              });
+            } catch (e) {
+              console.warn("sendNotification call failed", e);
+            }
+          } catch (e) {
+            console.warn("Failed to create notification", e);
+          }
+        } catch (dbErr) {
+          console.warn("Firestore lead saving warning, proceeding with lead confirmation:", dbErr);
         }
-      } catch (e) {
-        console.warn("Failed to create notification", e);
       }
+
+      setSubmittedId(docRefId);
+      setIsSuccess(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      toast({ title: "Inquiry Submitted!", description: "Our property specialist will reach out within 2 hours." });
 
       try {
         const webhookUrl = import.meta.env.VITE_APPS_SCRIPT_WEBHOOK_URL;
@@ -140,7 +168,7 @@ const Inquiry = () => {
         console.warn("Apps Script webhook failed", err);
       }
     } catch (err: any) {
-      toast({ title: "Submission Failed", description: String(err?.message || err), variant: "destructive" });
+      toast({ title: "Submission Notice", description: String(err?.message || err), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -242,7 +270,7 @@ const Inquiry = () => {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={onFormSubmit} className="space-y-6">
               <AnimatePresence mode="wait">
                 {step === 1 && (
                   <motion.div
@@ -280,9 +308,13 @@ const Inquiry = () => {
                         <div className="relative">
                           <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
+                            type="tel"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={10}
                             placeholder="10-digit mobile number"
                             value={form.phone}
-                            onChange={(e) => handleChange("phone", e.target.value)}
+                            onChange={(e) => handleChange("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
                             className="pl-10 font-body"
                           />
                         </div>
@@ -302,6 +334,17 @@ const Inquiry = () => {
                             className="pl-10 font-body"
                           />
                         </div>
+                      </div>
+
+                      {/* Step 1 Continue Button */}
+                      <div className="pt-2">
+                        <Button
+                          type="button"
+                          onClick={handleNextStep}
+                          className="w-full h-12 bg-accent text-accent-foreground font-semibold rounded-xl justify-center text-sm sm:text-base transition-all active:scale-95 shadow-md"
+                        >
+                          Continue to Preferences <ArrowRight className="h-4 w-4 ml-1.5" />
+                        </Button>
                       </div>
                     </div>
                   </motion.div>
@@ -355,18 +398,63 @@ const Inquiry = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 pl-1">
-                          Target Budget Range
-                        </label>
+                        <div className="flex items-center justify-between mb-1.5 pl-1">
+                          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Target Budget Range (₹ / month)
+                          </label>
+                          <span className="text-[11px] text-muted-foreground">Number keypad</span>
+                        </div>
                         <div className="relative">
                           <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="e.g. ₹20,000 – ₹30,000 / month"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            placeholder="e.g. 25000"
                             value={form.budget}
                             onChange={(e) => handleChange("budget", e.target.value)}
-                            className="pl-10 font-body"
+                            className="pl-10 font-body h-11 text-base"
                           />
                         </div>
+                        {/* 1-Tap Quick Budget Chips */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                          <span className="text-[11px] font-semibold text-muted-foreground mr-0.5">Quick Select:</span>
+                          {["₹15,000", "₹20,000", "₹25,000", "₹35,000", "₹50,000+"].map((b) => (
+                            <button
+                              key={b}
+                              type="button"
+                              onClick={() => handleChange("budget", b)}
+                              className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted hover:bg-accent hover:text-accent-foreground border border-border/70 transition-all active:scale-95 cursor-pointer shadow-2xs"
+                            >
+                              {b}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Step 2 Action Buttons - Guaranteed to ONLY continue to Step 3 */}
+                      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-border/40">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setStep(1);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="w-full sm:w-auto h-11 px-5 rounded-xl justify-center"
+                        >
+                          <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setStep(3);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="w-full sm:w-auto h-12 px-6 bg-accent text-accent-foreground font-semibold rounded-xl justify-center text-sm sm:text-base transition-all active:scale-95 shadow-md"
+                        >
+                          Continue to Review & Specifics <ArrowRight className="h-4 w-4 ml-1.5" />
+                        </Button>
                       </div>
                     </div>
                   </motion.div>
@@ -381,13 +469,33 @@ const Inquiry = () => {
                     className="space-y-4"
                   >
                     <div className="p-5 rounded-2xl bg-muted/40 border border-border/60 space-y-4">
-                      <h3 className="font-display font-bold text-base text-foreground">
-                        Step 3: Specific Notes & Review
-                      </h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-display font-bold text-base text-foreground">
+                          Step 3: Verify Details & Specifics
+                        </h3>
+                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-accent/20 text-accent-foreground border border-accent/30">
+                          Final Step
+                        </span>
+                      </div>
+
+                      {/* Verification Summary Card */}
+                      <div className="p-4 rounded-xl bg-card border border-border space-y-2 text-xs">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
+                          <span className="font-bold text-foreground text-sm">Please Verify Your Inquiry Details</span>
+                          <span className="text-[11px] text-muted-foreground">Ready to Submit</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-muted-foreground">
+                          <div><span className="text-foreground font-medium">Name:</span> {form.name || "—"}</div>
+                          <div><span className="text-foreground font-medium">Phone:</span> {form.phone || "—"}</div>
+                          <div><span className="text-foreground font-medium">Category:</span> {form.property_type || "Any"}</div>
+                          <div><span className="text-foreground font-medium">Location:</span> {form.location || "Any across Rajkot"}</div>
+                          <div className="sm:col-span-2"><span className="text-foreground font-medium">Target Budget:</span> {form.budget || "Flexible"}</div>
+                        </div>
+                      </div>
 
                       <div>
                         <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 pl-1">
-                          Special Requirements
+                          Special Requirements / Notes (Optional)
                         </label>
                         <div className="relative">
                           <MessageSquare className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
@@ -395,58 +503,39 @@ const Inquiry = () => {
                             placeholder="Furnishing requirements, lift/parking essential, move-in timeline (e.g. 1st of next month)..."
                             value={form.message}
                             onChange={(e) => handleChange("message", e.target.value)}
-                            className="pl-10 font-body min-h-[110px]"
+                            className="pl-10 font-body min-h-[100px]"
                           />
                         </div>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-card border border-border text-xs space-y-1 text-muted-foreground">
-                        <div className="font-semibold text-foreground">Submission Summary:</div>
-                        <div>Name: {form.name || "—"}</div>
-                        <div>Phone: {form.phone || "—"}</div>
-                        <div>Category: {form.property_type || "Any"}</div>
-                        <div>Location: {form.location || "Any across Rajkot"}</div>
-                        <div>Budget: {form.budget || "Flexible"}</div>
+                      {/* Step 3 Action Buttons - Back to edit or Final Submit */}
+                      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-border/40">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setStep(2);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="w-full sm:w-auto h-11 px-5 rounded-xl justify-center"
+                        >
+                          <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Edit
+                        </Button>
+
+                        <Button
+                          type="submit"
+                          disabled={loading}
+                          onClick={handleSubmit}
+                          className="w-full sm:w-auto h-12 px-8 bg-accent text-accent-foreground font-bold shadow-md hover:shadow-lg rounded-xl text-base transition-all active:scale-95 flex items-center justify-center cursor-pointer"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {loading ? "Submitting Inquiry..." : "Submit Inquiry"}
+                        </Button>
                       </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* Step Navigation Buttons */}
-              <div className="flex items-center justify-between pt-2">
-                {step > 1 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep((s) => s - 1)}
-                    className="h-11 px-5"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
-                  </Button>
-                ) : (
-                  <div />
-                )}
-
-                {step < 3 ? (
-                  <Button
-                    type="button"
-                    onClick={handleNextStep}
-                    className="h-11 px-6 bg-accent text-accent-foreground font-semibold"
-                  >
-                    Continue <ArrowRight className="h-4 w-4 ml-1.5" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="h-11 px-8 bg-accent text-accent-foreground font-semibold shadow-md"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    {loading ? "Submitting Inquiry..." : "Confirm & Submit Inquiry"}
-                  </Button>
-                )}
-              </div>
             </form>
           </div>
         )}

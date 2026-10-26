@@ -46,7 +46,7 @@ const Footer = () => (
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-foreground/10 hover:bg-accent hover:text-accent-foreground text-xs font-medium transition-all"
             >
               <Instagram className="h-4 w-4" />
-              <span>Follow @a_to_z_properties</span>
+              <span>Instagram</span>
             </a>
           </div>
         </div>
@@ -146,7 +146,7 @@ const Footer = () => (
                 rel="noopener noreferrer"
                 className="hover:text-accent transition-colors truncate font-medium flex items-center gap-1 group"
               >
-                <span>Instagram: @a_to_z_properties</span>
+                <span>Instagram</span>
                 <ArrowUpRight className="h-3 w-3 opacity-70 group-hover:opacity-100 transition-opacity" />
               </a>
             </li>

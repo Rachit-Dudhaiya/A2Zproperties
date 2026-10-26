@@ -378,11 +378,21 @@ export default function BookSlot() {
     return Object.keys(errs).length === 0;
   };
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentStep]);
+
   const handleNext = () => {
     if (currentStep === 1) {
-      if (validateStep1()) setCurrentStep(2);
+      if (validateStep1()) {
+        setCurrentStep(2);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } else if (currentStep === 2) {
-      if (validateStep2()) setCurrentStep(3);
+      if (validateStep2()) {
+        setCurrentStep(3);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
   };
 
@@ -870,7 +880,7 @@ export default function BookSlot() {
                     <Button
                       type="button"
                       onClick={handleNext}
-                      className="h-11 px-8 bg-primary text-primary-foreground font-semibold shadow-md"
+                      className="w-full sm:w-auto h-12 px-8 bg-primary text-primary-foreground font-semibold shadow-md rounded-xl justify-center text-sm sm:text-base transition-all active:scale-95"
                     >
                       Continue to Visitor Details
                       <ChevronRight className="h-4 w-4 ml-2" />
@@ -929,10 +939,15 @@ export default function BookSlot() {
                       <div className="relative">
                         <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                         <Input
+                          type="tel"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={10}
                           placeholder="e.g. 9876543210"
                           value={phone}
                           onChange={(e) => {
-                            setPhone(e.target.value);
+                            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                            setPhone(digits);
                             if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
                           }}
                           className={`pl-10 h-11 ${errors.phone ? "border-destructive" : ""}`}
@@ -962,12 +977,15 @@ export default function BookSlot() {
                   </div>
 
                   {/* Step 2 Actions */}
-                  <div className="pt-4 flex items-center justify-between">
+                  <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setCurrentStep(1)}
-                      className="h-11 px-6"
+                      onClick={() => {
+                        setCurrentStep(1);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="w-full sm:w-auto h-11 px-6 rounded-xl justify-center"
                     >
                       <ChevronLeft className="h-4 w-4 mr-2" />
                       Back
@@ -975,7 +993,7 @@ export default function BookSlot() {
                     <Button
                       type="button"
                       onClick={handleNext}
-                      className="h-11 px-8 bg-primary text-primary-foreground font-semibold shadow-md"
+                      className="w-full sm:w-auto h-12 px-8 bg-primary text-primary-foreground font-semibold shadow-md rounded-xl justify-center text-sm sm:text-base transition-all active:scale-95"
                     >
                       Continue to Payment
                       <ChevronRight className="h-4 w-4 ml-2" />
@@ -1171,12 +1189,15 @@ export default function BookSlot() {
                   </div>
 
                   {/* Step 3 Actions */}
-                  <div className="pt-4 flex items-center justify-between">
+                  <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setCurrentStep(2)}
-                      className="h-11 px-6"
+                      onClick={() => {
+                        setCurrentStep(2);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="w-full sm:w-auto h-11 px-6 rounded-xl justify-center"
                     >
                       <ChevronLeft className="h-4 w-4 mr-2" />
                       Back
@@ -1185,7 +1206,7 @@ export default function BookSlot() {
                       type="button"
                       onClick={handleBook}
                       disabled={submitting || uploadingScreenshot}
-                      className="h-11 px-8 bg-accent text-accent-foreground font-semibold shadow-md"
+                      className="w-full sm:w-auto h-12 px-8 bg-accent text-accent-foreground font-bold shadow-md rounded-xl justify-center text-sm sm:text-base hover:brightness-110 transition-all active:scale-95"
                     >
                       <CheckCircle2 className="h-4 w-4 mr-2" />
                       {submitting || uploadingScreenshot ? "Confirming Visit..." : "Confirm Site Visit"}

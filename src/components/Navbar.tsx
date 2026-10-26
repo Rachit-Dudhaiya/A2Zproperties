@@ -13,7 +13,6 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
-  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     let ticking = false;
@@ -59,34 +58,23 @@ const Navbar = () => {
       }`}
     >
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 flex items-center justify-between">
-        {/* Logo Left */}
+        {/* Logo / Brand Left */}
         <Link
           to="/"
           className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
           aria-label="A TO Z Properties Home"
         >
-          {!logoError ? (
-            <img
-              src="/logo.png"
-              alt="A TO Z Properties"
-              className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105"
-              onError={() => setLogoError(true)}
-            />
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent shadow-sm">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <div className="leading-tight">
-                <div className="font-display font-bold text-lg text-primary-foreground tracking-tight">
-                  A TO Z <span className="text-accent font-normal text-sm">PROPERTIES</span>
-                </div>
-                <div className="text-[10px] text-primary-foreground/70 tracking-widest uppercase font-mono">
-                  Real Estate • Rajkot
-                </div>
-              </div>
+          <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent shadow-sm transition-transform group-hover:scale-105">
+            <Building2 className="h-5 w-5" />
+          </div>
+          <div className="leading-tight">
+            <div className="font-display font-bold text-lg text-primary-foreground tracking-tight">
+              A TO Z <span className="text-accent font-normal text-sm">PROPERTIES</span>
             </div>
-          )}
+            <div className="text-[10px] text-primary-foreground/70 tracking-widest uppercase font-mono">
+              Real Estate • Rajkot
+            </div>
+          </div>
         </Link>
 
         {/* Centered Navigation Links with Animated Underline */}
@@ -261,7 +249,7 @@ const Navbar = () => {
                   className="w-full justify-center text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 text-sm"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out ({user.email?.split("@")[0] || "Account"})
+                  Sign Out ({user.full_name || user.phone || user.email?.split("@")[0] || "Account"})
                 </Button>
               ) : (
                 <Link to="/auth" onClick={() => setOpen(false)} className="block">

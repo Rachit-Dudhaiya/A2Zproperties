@@ -74,6 +74,30 @@ const assertAdmin = async (req: express.Request) => {
   return { uid: decoded.uid, email: decoded.email || null };
 };
 
+// Notification types that unauthenticated public visitors (inquiry/booking
+// forms) may trigger. Everything else requires a verified admin.
+const PUBLIC_NOTIFY_TYPES = new Set(['inquiry', 'booking', 'contact']);
+
+// Best-effort in-memory rate limiter for anonymous callers.
+const NOTIFY_RATE_LIMIT = 10;
+const NOTIFY_RATE_WINDOW_MS = 10 * 60 * 1000;
+const notifyRateBuckets = new Map<string, { count: number; resetAt: number }>();
+const isNotifyRateLimited = (key: string): boolean => {
+  const now = Date.now();
+  if (notifyRateBuckets.size > 500) {
+    for (const [k, v] of notifyRateBuckets) {
+      if (v.resetAt < now) notifyRateBuckets.delete(k);
+    }
+  }
+  const bucket = notifyRateBuckets.get(key);
+  if (!bucket || bucket.resetAt < now) {
+    notifyRateBuckets.set(key, { count: 1, resetAt: now + NOTIFY_RATE_WINDOW_MS });
+    return false;
+  }
+  bucket.count += 1;
+  return bucket.count > NOTIFY_RATE_LIMIT;
+};
+
 // Health
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
@@ -140,16 +164,28 @@ app.post('/createPaymentIntent', async (req, res) => {
 
 // Send push notification to admins using stored FCM tokens
 app.post('/sendNotification', async (req, res) => {
-  // Require caller to be an authenticated admin.
+  const { type, refId, title, message, data = {} } = req.body || {};
+
+  // Admins may send any notification. Public visitors (no token) may only
+  // trigger lead alerts (inquiry/booking/contact) that go to admins.
+  let isAdmin = false;
   try {
     await assertAdmin(req);
+    isAdmin = true;
   } catch (err: any) {
-    const msg = String(err?.message || err || 'Not authorized');
-    const code = msg.includes('Missing auth token') ? 401 : 403;
-    return res.status(code).json({ ok: false, error: msg });
+    if (!PUBLIC_NOTIFY_TYPES.has(String(type || ''))) {
+      const msg = String(err?.message || err || 'Not authorized');
+      const code = msg.includes('Missing auth token') ? 401 : 403;
+      return res.status(code).json({ ok: false, error: msg });
+    }
+    // Public caller with an allowed type: rate limit per IP.
+    const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown')
+      .split(',')[0]
+      .trim();
+    if (isNotifyRateLimited(`${ip}:${String(type)}`)) {
+      return res.status(429).json({ ok: false, error: 'Too many requests, please slow down' });
+    }
   }
-
-  const { type, refId, title, message, data = {} } = req.body || {};
   if (!admin.apps.length) return res.status(500).json({ ok: false, error: 'firebase-admin not initialized' });
   try {
     const db = admin.firestore();

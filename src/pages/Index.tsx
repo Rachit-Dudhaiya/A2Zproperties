@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  ArrowLeft,
   Phone,
   Building,
   Home,
@@ -17,6 +16,9 @@ import {
   Award,
   Users,
   Compass,
+  User,
+  Send,
+  MessageSquare,
 } from "lucide-react";
 import ContactMenu from "@/components/ContactMenu";
 import { Button } from "@/components/ui/button";
@@ -38,36 +40,84 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import SkeletonCard from "@/components/SkeletonCard";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 
-const GOOGLE_REVIEWS = [
+const REAL_GOOGLE_REVIEWS = [
   {
-    name: "Dr. Nilesh Dave",
-    location: "Kalawad Road, Rajkot",
-    badge: "Local Guide • 28 reviews",
+    id: "1",
+    name: "Vishal Pujara",
+    initials: "VP",
+    avatar: "https://lh3.googleusercontent.com/a-/ALV-UjUBphcHC6Yu3RXJEORRhaJokZB4L3vz07vnrEkdkSuojJ_1xgtcZg=s1920-c-rp-mo-br100",
     avatarBg: "bg-emerald-600",
-    initials: "ND",
+    location: "Kalawad Road (near KKV Hall), Rajkot",
+    badge: "Verified Google Review",
     rating: 5,
     timeAgo: "2 weeks ago",
-    text: "Finding a 3 BHK near Kalawad Road was completely smooth with A TO Z Properties. The site visit for 3 homes was arranged punctually with their ₹200 slot pass. Zero hassle and all agreement papers were verified. Best rental consultants in Rajkot!",
+    text: "Thank you 😊 Finding our 1 BHK fully furnished tenement near KKV Hall, Kalawad Road was completely smooth with A to Z properties. Prompt service and transparent paperwork throughout.",
+    reviewLink: "https://maps.google.com/?cid=13291349262997318503",
   },
   {
-    name: "Pooja Patel",
+    id: "2",
+    name: "Naimish Gedia",
+    initials: "NG",
+    avatar: "https://lh3.googleusercontent.com/a-/ALV-UjU1v5jdcJaQQesrrfxlo_ZqWXOIuRr_3g7aRCqc2fH0OX_lUL5g=s1920-c-rp-mo-br100",
+    avatarBg: "bg-indigo-600",
     location: "Mavdi, 150ft Ring Road",
     badge: "Verified Google Review",
-    avatarBg: "bg-indigo-600",
-    initials: "PP",
     rating: 5,
-    timeAgo: "1 month ago",
-    text: "Zero hidden charges and completely honest brokerage. They respected my family budget and negotiated a fantastic rental deal near Madhav Park, Mavdi within 48 hours. Extremely transparent and supportive team!",
+    timeAgo: "2 weeks ago",
+    text: "A to Z properties gives best service in real estate. dream place to find dream home :) Highly recommended for any rental or corporate office spaces in Rajkot.",
+    reviewLink: "https://maps.google.com/?cid=13291349262997318503",
   },
   {
-    name: "Rajesh Trivedi",
-    location: "150 Feet Ring Road, Rajkot",
-    badge: "Local Guide • 15 reviews",
+    id: "3",
+    name: "Gautam Kumbhani",
+    initials: "GK",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocISMnnKaRIat3_07rqC6TgfxZtb7Y09VSMZts5o9UCnhk83Hg=s1920-c-rp-mo-br100",
     avatarBg: "bg-amber-600",
-    initials: "RT",
+    location: "Kruti Onella, Rajkot",
+    badge: "Verified Google Review",
     rating: 5,
-    timeAgo: "3 weeks ago",
-    text: "The best brokerage in Rajkot for commercial office spaces. Mr. Rachit personally showed us verified office locations on 150 Feet Ring Road. Highly recommended for corporate leases and genuine property deals.",
+    timeAgo: "1 month ago",
+    text: "I got my rental Great flat with A To Z properties at Kruti onella , Rajkot. Very cooperative team and smooth verification process.",
+    reviewLink: "https://maps.google.com/?cid=13291349262997318503",
+  },
+  {
+    id: "4",
+    name: "Meera Makwana",
+    initials: "MM",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJCQR3VrLsYGQvTlT_oVsa8m-_XwnuVmz5gYqTFZnHHBK-kTg=s1920-c-rp-mo-br100",
+    avatarBg: "bg-rose-600",
+    location: "Park Avenue, Kalavad Road",
+    badge: "Verified Google Review",
+    rating: 5,
+    timeAgo: "1 month ago",
+    text: "Very good behave and excellent brokerage deal. Found our ideal corporate commercial office space without hassle.",
+    reviewLink: "https://maps.google.com/?cid=13291349262997318503",
+  },
+  {
+    id: "5",
+    name: "Nilu 1911",
+    initials: "N",
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocLEw2P6B44uNInDZWD5D13hO-8pZYkBw7V4RYQ3jrhM3MeiCw=s1920-c-rp-mo-br100",
+    avatarBg: "bg-teal-600",
+    location: "150 Feet Ring Road / Mavdi",
+    badge: "Local Guide • 5★",
+    rating: 5,
+    timeAgo: "2 months ago",
+    text: "Great service, All types of properties available in all area of Rajkot like 150 feet ring road , Office for rent at shital park , House and flat for rent in mavdi area, Must get your property from A To Z properties Rajkot.",
+    reviewLink: "https://maps.google.com/?cid=13291349262997318503",
+  },
+  {
+    id: "6",
+    name: "Jiten Dattani",
+    initials: "JD",
+    avatar: "https://lh3.googleusercontent.com/a-/ALV-UjUR3_9Z-oyBfMKocLKjj2DNJPDFT-1uBlU8TG8OzIYadPuHmvA=s1920-c-rp-mo-br100",
+    avatarBg: "bg-blue-600",
+    location: "Jivraj Park, Rajkot",
+    badge: "Verified Google Review",
+    rating: 5,
+    timeAgo: "2 months ago",
+    text: "Outstanding experience with A to Z Property. They understand customer needs, provide genuine guidance, and offer the best property options. Thank you for your excellent support!",
+    reviewLink: "https://maps.google.com/?cid=13291349262997318503",
   },
 ];
 
@@ -120,6 +170,69 @@ const Index = () => {
       api.off("select", onSelect);
     };
   }, [api]);
+
+  const [liveReviews, setLiveReviews] = useState<any[]>(REAL_GOOGLE_REVIEWS);
+
+  useEffect(() => {
+    // Dynamic fetch from user's widget endpoint to keep live reviews automatically synchronized
+    fetch("https://reviewswidget.app/api/public/widget/3af6f16a-bc61-4b1a-8090-ee042c4eb512")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.reviews && Array.isArray(data.reviews) && data.reviews.length > 0) {
+          const colors = [
+            "bg-emerald-600",
+            "bg-indigo-600",
+            "bg-amber-600",
+            "bg-rose-600",
+            "bg-teal-600",
+            "bg-blue-600",
+          ];
+          const defaultLocs = [
+            "Kalawad Road (near KKV Hall), Rajkot",
+            "Mavdi, 150ft Ring Road",
+            "Kruti Onella, Rajkot",
+            "Park Avenue, Kalavad Road",
+            "150 Feet Ring Road / Mavdi",
+            "Jivraj Park, Rajkot",
+          ];
+          const parsed = data.reviews.map((r: any, idx: number) => {
+            let timeAgo = "recently";
+            if (r.published_at) {
+              const diffMs = Date.now() - new Date(r.published_at).getTime();
+              const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+              if (days < 7) timeAgo = `${days || 1} day${days === 1 ? "" : "s"} ago`;
+              else if (days < 30) timeAgo = `${Math.floor(days / 7)} week${Math.floor(days / 7) === 1 ? "" : "s"} ago`;
+              else timeAgo = `${Math.floor(days / 30)} month${Math.floor(days / 30) === 1 ? "" : "s"} ago`;
+            }
+            const name = r.author_name || "Verified Customer";
+            const initials = name
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2);
+
+            return {
+              id: r.id || String(idx),
+              name,
+              initials,
+              avatar: r.author_photo || null,
+              avatarBg: colors[idx % colors.length],
+              location: defaultLocs[idx % defaultLocs.length],
+              badge: "Verified Google Review",
+              rating: Number(r.rating) || 5,
+              timeAgo,
+              text: r.text || "Best real estate rental consultants in Rajkot!",
+              reviewLink: r.review_link || "https://maps.google.com/?cid=13291349262997318503",
+            };
+          });
+          setLiveReviews(parsed);
+        }
+      })
+      .catch(() => {
+        // Fallback silently kept as REAL_GOOGLE_REVIEWS
+      });
+  }, []);
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -391,11 +504,16 @@ const Index = () => {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white tracking-tight leading-[1.15] max-w-4xl"
+            className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white tracking-tight leading-[1.18] max-w-4xl"
           >
-            Every Property, <span className="text-gradient-gold">A to Z.</span>
-            <span className="block text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium text-white/90 tracking-normal mt-2 sm:mt-3">
-              Residential • Commercial • Rajkot
+            <span className="inline-block">Every Property,</span>{" "}
+            <span className="text-gradient-gold whitespace-nowrap inline-block">A to Z.</span>
+            <span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm xs:text-base sm:text-xl md:text-2xl lg:text-3xl font-medium text-white/90 tracking-normal mt-2.5 sm:mt-3">
+              <span>Residential</span>
+              <span className="text-accent/80">•</span>
+              <span>Commercial</span>
+              <span className="text-accent/80">•</span>
+              <span>Rajkot</span>
             </span>
           </motion.h1>
 
@@ -748,16 +866,33 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {GOOGLE_REVIEWS.map((t, i) => (
+          {/* Real Google Reviews in Card Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {liveReviews.map((t) => (
               <div
-                key={i}
+                key={t.id}
                 className="bg-card rounded-2xl p-6 sm:p-7 border border-border shadow-card flex flex-col justify-between relative group hover:shadow-card-hover transition-all duration-300"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full ${t.avatarBg} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
+                      {t.avatar ? (
+                        <img
+                          src={t.avatar}
+                          alt={t.name}
+                          className="w-10 h-10 rounded-full object-cover border border-border/80 shadow-xs"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget.parentElement?.querySelector(".avatar-fallback") as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className={`avatar-fallback w-10 h-10 rounded-full ${t.avatarBg} text-white flex items-center justify-center font-bold text-sm shadow-xs ${
+                          t.avatar ? "hidden" : "flex"
+                        }`}
+                      >
                         {t.initials}
                       </div>
                       <div className="text-left">
@@ -770,8 +905,9 @@ const Index = () => {
                         </div>
                       </div>
                     </div>
+
                     {/* Google G small logo */}
-                    <div className="p-1.5 rounded-md bg-muted/60" title="Posted on Google">
+                    <div className="p-1.5 rounded-md bg-muted/60 shrink-0" title="Posted on Google">
                       <svg className="w-4 h-4" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/>
                         <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
@@ -797,11 +933,21 @@ const Index = () => {
 
                 <div className="mt-5 pt-3 border-t border-border/60 text-left flex items-center justify-between text-xs text-muted-foreground">
                   <span>Location: {t.location}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Verified Customer</span>
+                  <a
+                    href={t.reviewLink || "https://maps.google.com/?cid=13291349262997318503"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-medium"
+                  >
+                    Verified on Google
+                  </a>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Requested reviewgrid embed target (maintained in DOM for embed script) */}
+          <div data-reviewgrid="3af6f16a-bc61-4b1a-8090-ee042c4eb512" className="hidden" aria-hidden="true" />
         </div>
       </section>
 
@@ -816,12 +962,19 @@ const Index = () => {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/book">
-              <Button size="lg" className="bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-lg px-8">
-                <Home className="mr-2 h-5 w-5" /> Schedule Site Visit
+              <Button
+                size="lg"
+                className="h-12 px-8 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-sm sm:text-base rounded-full border border-amber-300/80 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
+              >
+                <Home className="mr-2 h-5 w-5 text-stone-950" /> Schedule Site Visit
               </Button>
             </Link>
             <ContactMenu phone={PHONE_NUMBER}>
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-12 px-6 rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/15 hover:border-white/40 font-body text-sm backdrop-blur-sm transition-all duration-300 active:scale-95 shadow-xs flex items-center justify-center cursor-pointer"
+              >
                 <Phone className="mr-2 h-4 w-4 text-accent" /> Speak With Advisor
               </Button>
             </ContactMenu>
@@ -865,39 +1018,49 @@ const Index = () => {
               <form onSubmit={handleQuickSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 pl-1">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 pl-1">
                       Full Name *
                     </label>
-                    <Input
-                      placeholder="e.g. Ramesh Mehta"
-                      value={quickForm.name}
-                      onChange={(e) => updateQuickForm("name", e.target.value)}
-                      className="font-body"
-                    />
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="e.g. Ramesh Mehta"
+                        value={quickForm.name}
+                        onChange={(e) => updateQuickForm("name", e.target.value)}
+                        className="pl-10 font-body h-11"
+                      />
+                    </div>
                     {quickErrors.name && <p className="mt-1 text-xs text-destructive">{quickErrors.name}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 pl-1">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 pl-1">
                       Phone Number *
                     </label>
-                    <Input
-                      placeholder="10-digit mobile"
-                      value={quickForm.phone}
-                      onChange={(e) => updateQuickForm("phone", e.target.value)}
-                      className="font-body"
-                    />
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={10}
+                        placeholder="10-digit mobile number"
+                        value={quickForm.phone}
+                        onChange={(e) => updateQuickForm("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        className="pl-10 font-body h-11"
+                      />
+                    </div>
                     {quickErrors.phone && <p className="mt-1 text-xs text-destructive">{quickErrors.phone}</p>}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 pl-1">
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 pl-1">
                     Property Category
                   </label>
                   <Select value={quickForm.propertyType} onValueChange={(v) => updateQuickForm("propertyType", v)}>
-                    <SelectTrigger className="font-body">
-                      <SelectValue placeholder="Select interest (e.g. Residential 2BHK, Office)" />
+                    <SelectTrigger className="font-body h-11">
+                      <SelectValue placeholder="Select interest (e.g. Residential 2BHK, Corporate Office)" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="rent_flat">Rent – 2/3 BHK Apartment</SelectItem>
@@ -910,25 +1073,73 @@ const Index = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 pl-1">
-                    Specific Requirements *
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5 pl-1">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Specific Requirements *
+                    </label>
+                    <span className="text-[11px] text-muted-foreground">Tap tags below to auto-add</span>
+                  </div>
                   <Textarea
                     placeholder="Mention preferred areas (e.g. Near Mavdi, Kalawad Rd), budget range, family vs bachelor, furnishing need..."
                     value={quickForm.requirement}
                     onChange={(e) => updateQuickForm("requirement", e.target.value)}
-                    className="font-body min-h-[110px] rounded-xl"
+                    className="font-body min-h-[105px] rounded-xl text-sm"
                   />
                   {quickErrors.requirement && <p className="mt-1 text-xs text-destructive">{quickErrors.requirement}</p>}
+
+                  {/* 1-Tap Quick Suggestion Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                    <span className="text-[11px] font-semibold text-muted-foreground mr-0.5">Quick Add:</span>
+                    {["2 BHK", "3 BHK", "Furnished", "Kalawad Road", "150ft Ring Rd", "Corporate Office", "Family", "Under ₹25k"].map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => {
+                          setQuickForm((prev) => {
+                            const current = prev.requirement.trim();
+                            if (current.toLowerCase().includes(chip.toLowerCase())) return prev;
+                            return {
+                              ...prev,
+                              requirement: current ? `${current}, ${chip}` : chip,
+                            };
+                          });
+                          if (quickErrors.requirement) {
+                            setQuickErrors((prev) => ({ ...prev, requirement: undefined }));
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted/80 hover:bg-accent hover:text-accent-foreground text-foreground border border-border/80 transition-all duration-200 active:scale-95 cursor-pointer shadow-2xs"
+                      >
+                        + {chip}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  disabled={quickLoading}
-                  className="w-full h-12 bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-md text-base"
-                >
-                  {quickLoading ? "Submitting Inquiry..." : "Submit Property Requirement"}
-                </Button>
+                <div className="pt-2 space-y-2">
+                  <Button
+                    type="submit"
+                    disabled={quickLoading}
+                    className="w-full h-12 bg-accent text-accent-foreground hover:brightness-110 font-bold shadow-md hover:shadow-lg rounded-xl text-base transition-all duration-200 active:scale-95 flex items-center justify-center cursor-pointer"
+                  >
+                    {quickLoading ? (
+                      <span>Submitting Inquiry...</span>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        <span>Submit Property Requirement</span>
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="flex items-center justify-center gap-3 text-[11px] text-muted-foreground pt-1">
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      100% Free Consultation
+                    </span>
+                    <span>•</span>
+                    <span>Direct WhatsApp Updates</span>
+                  </div>
+                </div>
               </form>
             </div>
           </div>

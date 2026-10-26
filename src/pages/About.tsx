@@ -12,6 +12,7 @@ import {
   Sparkles,
   MapPin,
   Clock,
+  PlusCircle,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -245,7 +246,12 @@ export default function About() {
               </Button>
             </Link>
             <Link to="/inquiry">
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-11 px-6 rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/15 hover:border-white/40 font-body text-sm backdrop-blur-sm transition-all duration-300 active:scale-95 shadow-xs"
+              >
+                <PlusCircle className="mr-2 h-4 w-4 text-accent" />
                 Post Requirement
               </Button>
             </Link>

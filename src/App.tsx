@@ -35,12 +35,13 @@ const PageLoadingFallback = () => (
 );
 
 const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isAdmin, refreshRole } = useAuth();
-  const [, setChecking] = React.useState(true);
+  const { user, isAdmin, loading, refreshRole } = useAuth();
+  const [checking, setChecking] = React.useState(true);
 
   React.useEffect(() => {
     let mounted = true;
     const ensure = async () => {
+      if (loading) return;
       if (!user) {
         if (mounted) setChecking(false);
         return;
@@ -57,15 +58,17 @@ const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
     return () => {
       mounted = false;
     };
-  }, [user, refreshRole]);
+  }, [user, loading, refreshRole]);
 
+  if (loading || checking) return <PageLoadingFallback />;
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return <PageLoadingFallback />;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 };

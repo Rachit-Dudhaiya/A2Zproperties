@@ -619,6 +619,7 @@ const AddEditProperty = () => {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-foreground">Floor Number</Label>
                   <Input
+                    inputMode="numeric"
                     value={form.floor_no}
                     onChange={(e) => setForm({ ...form, floor_no: e.target.value })}
                     placeholder="e.g. 4"
@@ -629,6 +630,7 @@ const AddEditProperty = () => {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-foreground">Total Floors in Building</Label>
                   <Input
+                    inputMode="numeric"
                     value={form.total_floors}
                     onChange={(e) => setForm({ ...form, total_floors: e.target.value })}
                     placeholder="e.g. 10"
@@ -671,6 +673,7 @@ const AddEditProperty = () => {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold text-foreground">Monthly Maintenance (₹)</Label>
                   <Input
+                    inputMode="numeric"
                     value={form.maintenance_monthly}
                     onChange={(e) => setForm({ ...form, maintenance_monthly: e.target.value })}
                     placeholder="e.g. 1500"

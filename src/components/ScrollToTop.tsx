@@ -5,22 +5,20 @@ export default function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Scroll window and document elements to top when navigating to a new page
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant",
-    });
-    document.documentElement.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant",
-    });
-    document.body.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant",
-    });
+    // Prevent laggy 5000px scroll animations across routes while keeping in-page smooth scrolls
+    const root = document.documentElement;
+    const prevScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    root.scrollTop = 0;
+
+    const timer = setTimeout(() => {
+      root.style.scrollBehavior = prevScrollBehavior || "";
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   return null;

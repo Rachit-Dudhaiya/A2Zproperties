@@ -61,12 +61,14 @@ const Navbar = () => {
         {/* Logo / Brand Left */}
         <Link
           to="/"
-          className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
+          className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
           aria-label="A TO Z Properties Home"
         >
-          <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent shadow-sm transition-transform group-hover:scale-105">
-            <Building2 className="h-5 w-5" />
-          </div>
+          <img
+            src="/az-logo-clean.png"
+            alt="A TO Z Properties"
+            className="h-10 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
+          />
           <div className="leading-tight">
             <div className="font-display font-bold text-lg text-primary-foreground tracking-tight">
               A TO Z <span className="text-accent font-normal text-sm">PROPERTIES</span>

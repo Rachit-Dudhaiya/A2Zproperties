@@ -29,7 +29,6 @@ import {
 } from "@/lib/data";
 import { openBookingWhatsApp } from "@/lib/whatsapp";
 import { isValidPhone } from "@/lib/validation";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import {
   Calendar,
   Clock,
@@ -1220,7 +1219,6 @@ export default function BookSlot() {
       </main>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 }

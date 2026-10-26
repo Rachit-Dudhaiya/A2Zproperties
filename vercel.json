@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/__/auth/(.*)", "destination": "https://atozproperties-5ab23.firebaseapp.com/__/auth/$1" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api|.*\\.).*)", "destination": "/" }
   ]

@@ -21,7 +21,6 @@ import PropertyCard from "@/components/PropertyCard";
 import { db } from "@/integrations/firebase/client";
 import { collection, query as fsQuery, orderBy as fsOrderBy, onSnapshot } from "firebase/firestore";
 import SkeletonCard from "@/components/SkeletonCard";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Properties = () => {
@@ -584,7 +583,6 @@ const Properties = () => {
       </AnimatePresence>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

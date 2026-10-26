@@ -1,4 +1,6 @@
-const WhatsAppIcon = ({ className = "w-8 h-8 sm:w-9 sm:h-9" }: { className?: string }) => (
+import { useState } from "react";
+
+const WhatsAppIcon = ({ className = "w-7 h-7 flex-shrink-0" }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -13,14 +15,21 @@ const WhatsAppIcon = ({ className = "w-8 h-8 sm:w-9 sm:h-9" }: { className?: str
 const WhatsAppButton = () => {
   const phoneNumber = "916353388626";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=Hello%20A%20TO%20Z%20Properties%2C%20I%20am%20interested%20in%20property%20consultation.`;
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <aside aria-label="Quick WhatsApp assistance" className="fixed bottom-6 right-6 z-50">
+    <div
+      className="fixed bottom-6 right-6 z-[9999] pointer-events-auto"
+      style={{ position: "fixed", bottom: "1.5rem", right: "1.5rem", zIndex: 9999 }}
+      aria-label="Quick WhatsApp assistance"
+    >
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-full shadow-2xl hover:shadow-[#25D366]/40 transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="group relative flex items-center bg-[#25D366] hover:bg-[#20ba5a] text-white p-3.5 sm:p-4 rounded-full shadow-2xl hover:shadow-[#25D366]/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400"
         aria-label="Chat with A TO Z Properties on WhatsApp"
       >
         {/* Soft pulse aura */}
@@ -29,14 +38,16 @@ const WhatsAppButton = () => {
         {/* WhatsApp Icon */}
         <WhatsAppIcon />
 
-        {/* Hover Tooltip */}
+        {/* Expandable text like old */}
         <span
-          className="absolute right-full mr-3 px-3 py-1.5 bg-gray-900/90 backdrop-blur-sm text-white text-xs font-semibold rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none select-none"
+          className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap text-sm font-semibold tracking-wide ${
+            isHovered ? "max-w-xs ml-2.5 pr-1.5 opacity-100" : "max-w-0 opacity-0"
+          }`}
         >
           Chat with Us
         </span>
       </a>
-    </aside>
+    </div>
   );
 };
 

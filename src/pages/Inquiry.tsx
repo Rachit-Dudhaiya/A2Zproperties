@@ -25,7 +25,6 @@ import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { isValidPhone } from "@/lib/validation";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
 const Inquiry = () => {
   const { toast } = useToast();
@@ -542,7 +541,6 @@ const Inquiry = () => {
       </div>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

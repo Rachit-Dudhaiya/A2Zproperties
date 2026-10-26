@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { Button } from "@/components/ui/button";
 import { PHONE_NUMBER } from "@/lib/data";
 import { fadeUp, staggerContainer } from "@/lib/motion";
@@ -260,7 +259,6 @@ export default function About() {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 }

@@ -167,6 +167,21 @@
   .section-padding {
     @apply py-16 md:py-24;
   }
+  .page-smooth-enter {
+    animation: pageFadeSlide 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+    will-change: opacity, transform;
+  }
+}
+
+@keyframes pageFadeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Reduced motion support */

@@ -14,10 +14,12 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
         {/* Column 1: Brand & Credibility */}
         <div className="space-y-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent shadow-sm">
-              <Building2 className="h-5 w-5" />
-            </div>
+          <Link to="/" className="flex items-center gap-3 group">
+            <img
+              src="/az-logo-clean.png"
+              alt="A TO Z Properties"
+              className="h-11 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
+            />
             <div>
               <span className="font-display font-bold text-xl text-primary-foreground tracking-tight">
                 A TO Z <span className="text-accent font-normal text-sm">PROPERTIES</span>

@@ -36,7 +36,6 @@ import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
 import Autoplay from "embla-carousel-autoplay";
 import { isValidPhone } from "@/lib/validation";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import SkeletonCard from "@/components/SkeletonCard";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 
@@ -1147,7 +1146,6 @@ const Index = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

@@ -4,9 +4,19 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
+const resolveAuthDomain = () => {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname.toLowerCase();
+    if (host === "atozproperties.co.in" || host === "www.atozproperties.co.in") {
+      return "atozproperties.co.in";
+    }
+  }
+  return import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "atozproperties-5ab23.firebaseapp.com";
+};
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  authDomain: resolveAuthDomain(),
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,

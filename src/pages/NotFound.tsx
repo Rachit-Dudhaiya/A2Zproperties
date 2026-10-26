@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { motion } from "framer-motion";
 
 const NotFound = () => {
@@ -110,7 +109,6 @@ const NotFound = () => {
       </main>
 
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

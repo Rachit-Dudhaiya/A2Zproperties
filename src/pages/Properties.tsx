@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import {
   Search,
   SlidersHorizontal,
@@ -10,6 +10,8 @@ import {
   Home,
   Check,
   Filter,
+  Phone,
+  MapPin,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,6 +24,8 @@ import { db } from "@/integrations/firebase/client";
 import { collection, query as fsQuery, orderBy as fsOrderBy, onSnapshot } from "firebase/firestore";
 import SkeletonCard from "@/components/SkeletonCard";
 import { motion, AnimatePresence } from "framer-motion";
+import SEO from "@/components/SEO";
+import { MAIN_PHONE, MAIN_PHONE_DISPLAY, SECONDARY_PHONE, SECONDARY_PHONE_DISPLAY } from "@/lib/data";
 
 const Properties = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -197,6 +201,11 @@ const Properties = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <SEO
+        title="All Rental Properties in Rajkot | A TO Z Properties"
+        description="Browse thoroughly inspected flats, bungalows, and commercial units available for immediate rent in Rajkot. Assisted site visits for ₹200. WhatsApp 63533 88626."
+        canonical="https://www.atozproperties.co.in/properties"
+      />
       <Navbar />
 
       {/* Header Banner */}
@@ -204,10 +213,10 @@ const Properties = () => {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white tracking-tight">
-              Verified Properties in <span className="text-gradient-gold">Rajkot</span>
+              Verified Properties for Rent in <span className="text-gradient-gold">Rajkot</span>
             </h1>
             <p className="mt-2 text-white/80 font-body text-sm sm:text-base">
-              Browse thoroughly inspected flats, bungalows, and commercial units available for immediate lease and purchase.
+              Browse thoroughly inspected flats, bungalows, and commercial units available for immediate rent in Rajkot.
             </p>
           </div>
         </div>
@@ -427,6 +436,61 @@ const Properties = () => {
                 ))}
               </div>
             )}
+
+            {/* Task 5: Browse by Type and Browse by Area Links on /properties */}
+            <div className="mt-14 pt-10 border-t border-border space-y-8">
+              <div>
+                <h3 className="font-display font-bold text-lg text-foreground mb-3">
+                  Browse Rentals by Property Type
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "Flats for Rent in Rajkot", path: "/flats-for-rent-rajkot" },
+                    { label: "2 BHK Flats", path: "/2-bhk-flat-for-rent-rajkot" },
+                    { label: "3 BHK Flats", path: "/3-bhk-flat-for-rent-rajkot" },
+                    { label: "Furnished Flats", path: "/furnished-flat-for-rent-rajkot" },
+                    { label: "Office Spaces", path: "/office-for-rent-rajkot" },
+                    { label: "Shops & Showrooms", path: "/shop-for-rent-rajkot" },
+                    { label: "Bungalows & Tenements", path: "/bungalow-for-rent-rajkot" },
+                  ].map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-muted hover:bg-accent hover:text-accent-foreground border border-border transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-display font-bold text-lg text-foreground mb-3">
+                  Browse Rentals by Top Rajkot Corridors
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "Mavdi", path: "/rent-mavdi" },
+                    { label: "150 Feet Ring Road", path: "/rent-150-feet-ring-road" },
+                    { label: "Goverdhan Chowk", path: "/rent-goverdhan-chowk" },
+                    { label: "Nana Mava", path: "/rent-nana-mava" },
+                    { label: "Race Course", path: "/rent-race-course" },
+                    { label: "Kalawad Road", path: "/rent-kalawad-road" },
+                    { label: "University Road", path: "/rent-university-road" },
+                    { label: "Raiya Road", path: "/rent-raiya-road" },
+                    { label: "Amin Marg", path: "/rent-amin-marg" },
+                  ].map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-muted hover:bg-accent hover:text-accent-foreground border border-border transition-colors"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </main>
         </div>
       </div>

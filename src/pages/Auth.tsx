@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isValidEmail } from "@/lib/validation";
+import SEO from "@/components/SEO";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -135,6 +136,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-background">
+      <SEO title="Sign In | A TO Z Properties" noindex />
       {/* Decorative Emerald Glow Background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/30 via-background to-background pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-accent/10 blur-3xl pointer-events-none" />

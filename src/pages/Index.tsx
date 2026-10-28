@@ -30,7 +30,15 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import PropertyCard from "@/components/PropertyCard";
-import { PHONE_NUMBER } from "@/lib/data";
+import {
+  PHONE_NUMBER,
+  MAIN_PHONE,
+  MAIN_PHONE_DISPLAY,
+  SECONDARY_PHONE,
+  SECONDARY_PHONE_DISPLAY,
+  cleanListingText,
+  toTitleCase,
+} from "@/lib/data";
 import heroBg from "@/assets/hero-bg.jpg";
 import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
@@ -38,6 +46,21 @@ import Autoplay from "embla-carousel-autoplay";
 import { isValidPhone } from "@/lib/validation";
 import SkeletonCard from "@/components/SkeletonCard";
 import { fadeUp, staggerContainer } from "@/lib/motion";
+import SEO from "@/components/SEO";
+
+function getAreaLandingUrl(areaName: string): string {
+  const lower = (areaName || "").toLowerCase();
+  if (lower.includes("mavdi")) return "/rent-mavdi";
+  if (lower.includes("150")) return "/rent-150-feet-ring-road";
+  if (lower.includes("goverdhan")) return "/rent-goverdhan-chowk";
+  if (lower.includes("nana mava")) return "/rent-nana-mava";
+  if (lower.includes("kalawad")) return "/rent-kalawad-road";
+  if (lower.includes("race course")) return "/rent-race-course";
+  if (lower.includes("university")) return "/rent-university-road";
+  if (lower.includes("raiya")) return "/rent-raiya-road";
+  if (lower.includes("amin marg")) return "/rent-amin-marg";
+  return `/flats-for-rent-rajkot`;
+}
 
 const REAL_GOOGLE_REVIEWS = [
   {
@@ -455,14 +478,14 @@ const Index = () => {
     if (!api) return;
     try {
       api.plugins()?.autoplay?.stop();
-    } catch {}
+    } catch { }
   }, [api]);
 
   const handleMouseLeave = useCallback(() => {
     if (!api) return;
     try {
       api.plugins()?.autoplay?.play();
-    } catch {}
+    } catch { }
   }, [api]);
 
   const trustStats = [
@@ -474,6 +497,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-emerald-800 selection:text-white">
+      <SEO
+        title="Flats &amp; Offices for Rent in Rajkot | A TO Z Properties"
+        description="Verified flats, offices &amp; bungalows for rent in Rajkot: Mavdi, 150 Ft Ring Road, Nana Mava, Race Course. ₹200 site visits. WhatsApp 63533 88626"
+        canonical="https://www.atozproperties.co.in/"
+        ogTitle="A TO Z Properties: Verified Rentals in Rajkot"
+        ogDescription="Flats, offices &amp; bungalows for rent across Rajkot. Real photos, physically checked. Book a ₹200 site visit or WhatsApp +91 63533 88626."
+      />
       <Navbar />
 
       {/* 1. Full-Bleed Hero Section with Dark Emerald Overlay & Floating Glass Search Card */}
@@ -482,6 +512,8 @@ const Index = () => {
           src={heroBg}
           alt="Luxury Architecture in Rajkot"
           className="absolute inset-0 w-full h-full object-cover"
+          fetchPriority="high"
+          loading="eager"
         />
         {/* Layered Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/80 to-primary/95 dark:from-background/95 dark:via-background/85 dark:to-background" />
@@ -495,24 +527,20 @@ const Index = () => {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-white backdrop-blur-md border border-white/20 text-xs sm:text-sm font-medium mb-6 shadow-sm"
           >
             <Sparkles className="h-4 w-4 text-accent" />
-            <span>Rajkot's Most Trusted Rental & Real Estate Brokerage</span>
+            <span>Rajkot's Most Trusted Rental &amp; Real Estate Brokerage</span>
           </motion.div>
 
-          {/* Oversized Display Headline */}
+          {/* Oversized Display Headline (Task 3: Exact H1 Requirement) */}
           <motion.h1
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white tracking-tight leading-[1.18] max-w-4xl"
           >
-            <span className="inline-block">Every Property,</span>{" "}
-            <span className="text-gradient-gold whitespace-nowrap inline-block">A to Z.</span>
-            <span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm xs:text-base sm:text-xl md:text-2xl lg:text-3xl font-medium text-white/90 tracking-normal mt-2.5 sm:mt-3">
-              <span>Residential</span>
-              <span className="text-accent/80">•</span>
-              <span>Commercial</span>
-              <span className="text-accent/80">•</span>
-              <span>Rajkot</span>
+            <span>Flats, Offices &amp; Bungalows for Rent in </span>
+            <span className="text-gradient-gold whitespace-nowrap">Rajkot</span>
+            <span className="block text-sm xs:text-base sm:text-xl font-normal text-white/80 font-body tracking-wider uppercase mt-3">
+              Every Property, A to Z
             </span>
           </motion.h1>
 
@@ -584,7 +612,7 @@ const Index = () => {
                 {/* Budget Range Select */}
                 <div>
                   <label className="block text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 pl-1">
-                    Monthly Budget
+                    Rental Budget
                   </label>
                   <Select value={searchBudget} onValueChange={setSearchBudget}>
                     <SelectTrigger className="h-11 bg-background/60">
@@ -691,13 +719,12 @@ const Index = () => {
                 {featured.map((p, i) => (
                   <CarouselItem
                     key={p.id}
-                    className={`pl-4 sm:pl-5 ${
-                      featured.length === 2
-                        ? "basis-full sm:basis-1/2 max-w-lg"
-                        : featured.length === 3
+                    className={`pl-4 sm:pl-5 ${featured.length === 2
+                      ? "basis-full sm:basis-1/2 max-w-lg"
+                      : featured.length === 3
                         ? "basis-full sm:basis-1/2 lg:basis-1/3"
                         : "basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
-                    }`}
+                      }`}
                   >
                     <PropertyCard property={p} index={i} />
                   </CarouselItem>
@@ -713,11 +740,10 @@ const Index = () => {
                     key={idx}
                     type="button"
                     onClick={() => api?.scrollTo(idx)}
-                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                      currentSlide === idx
-                        ? "w-8 bg-accent"
-                        : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${currentSlide === idx
+                      ? "w-8 bg-accent"
+                      : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                      }`}
                     aria-label={`Go to slide ${idx + 1}`}
                   />
                 ))}
@@ -815,7 +841,7 @@ const Index = () => {
           {topRajkotLocations.map((loc) => (
             <Link
               key={loc.name}
-              to={`/properties?location=${encodeURIComponent(loc.name)}`}
+              to={getAreaLandingUrl(loc.name)}
               className="group relative rounded-2xl overflow-hidden aspect-[4/3] shadow-card hover:shadow-card-hover transition-all duration-300 border border-border/60"
             >
               <img
@@ -847,10 +873,10 @@ const Index = () => {
           <div className="text-center max-w-2xl mx-auto mb-12">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-card border border-border shadow-sm text-xs font-semibold mb-3">
               <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
               </svg>
               <span className="text-foreground">Google Verified Reviews</span>
               <span className="text-muted-foreground">•</span>
@@ -863,6 +889,24 @@ const Index = () => {
             <p className="mt-2 text-muted-foreground font-body text-sm sm:text-base">
               Original reviews left by genuine tenants and property buyers who relied on our assisted site visits and honest brokerage in Rajkot.
             </p>
+            <div className="mt-5 flex items-center justify-center">
+              <a
+                href="https://g.page/r/CWfrmu67W3S4EBE/review"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center"
+              >
+                <Button className="h-10 px-6 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                  </svg>
+                  Write a Google Review
+                </Button>
+              </a>
+            </div>
           </div>
 
           {/* Real Google Reviews in Card Grid */}
@@ -888,9 +932,8 @@ const Index = () => {
                         />
                       ) : null}
                       <div
-                        className={`avatar-fallback w-10 h-10 rounded-full ${t.avatarBg} text-white flex items-center justify-center font-bold text-sm shadow-xs ${
-                          t.avatar ? "hidden" : "flex"
-                        }`}
+                        className={`avatar-fallback w-10 h-10 rounded-full ${t.avatarBg} text-white flex items-center justify-center font-bold text-sm shadow-xs ${t.avatar ? "hidden" : "flex"
+                          }`}
                       >
                         {t.initials}
                       </div>
@@ -908,10 +951,10 @@ const Index = () => {
                     {/* Google G small logo */}
                     <div className="p-1.5 rounded-md bg-muted/60 shrink-0" title="Posted on Google">
                       <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"/>
-                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
                       </svg>
                     </div>
                   </div>
@@ -950,33 +993,35 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 7. Compact CTA Band */}
+      {/* 7. Compact CTA Band - Classic Old Design */}
       <section className="bg-hero text-primary-foreground py-16 relative overflow-hidden">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10 text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white max-w-2xl mx-auto">
-            Tour 3 Properties for <span className="text-gradient-gold">₹200</span>
+            Tour 3 Properties for ₹200
           </h2>
           <p className="mt-4 text-white/80 font-body max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
             Convenient guided visits available 7 days a week: 10:00 AM – 1:00 PM & 4:00 PM – 10:00 PM. Book your slot online in under 60 seconds.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/book">
-              <Button
-                size="lg"
-                className="h-12 px-8 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-sm sm:text-base rounded-full border border-amber-300/80 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
-              >
-                <Home className="mr-2 h-5 w-5 text-stone-950" /> Schedule Site Visit
+              <Button size="lg" className="bg-accent text-accent-foreground font-semibold px-8 hover:brightness-110">
+                Book Site Visit (₹200) <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <ContactMenu phone={PHONE_NUMBER}>
+            <a
+              href="https://wa.me/916353388626"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center"
+            >
               <Button
                 size="lg"
                 variant="outline"
-                className="h-12 px-6 rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/15 hover:border-white/40 font-body text-sm backdrop-blur-sm transition-all duration-300 active:scale-95 shadow-xs flex items-center justify-center cursor-pointer"
+                className="h-11 px-6 rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/15 hover:border-white/40 font-body text-sm backdrop-blur-sm transition-all duration-300 active:scale-95 shadow-xs"
               >
-                <Phone className="mr-2 h-4 w-4 text-accent" /> Speak With Advisor
+                WhatsApp Inquiry
               </Button>
-            </ContactMenu>
+            </a>
           </div>
         </div>
       </section>

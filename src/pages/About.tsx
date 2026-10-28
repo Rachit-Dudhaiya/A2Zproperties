@@ -17,8 +17,8 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { PHONE_NUMBER } from "@/lib/data";
-import { fadeUp, staggerContainer } from "@/lib/motion";
+import SEO from "@/components/SEO";
+import { MAIN_PHONE, MAIN_PHONE_DISPLAY, SECONDARY_PHONE, SECONDARY_PHONE_DISPLAY, OFFICE_ADDRESS, OFFICE_HOURS } from "@/lib/data";
 
 const VALUES = [
   {
@@ -53,6 +53,11 @@ const MILESTONES = [
 export default function About() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <SEO
+        title="About A TO Z Properties, Rental Broker in Rajkot"
+        description="About A TO Z Properties: Rajkot's benchmark rental brokerage since 2006. Located at Goverdhan Chowk, Mavdi. Verified residential and commercial leases. WhatsApp 63533 88626."
+        canonical="https://www.atozproperties.co.in/about"
+      />
       <Navbar />
 
       {/* Editorial Hero Banner */}
@@ -62,11 +67,12 @@ export default function About() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-accent text-xs font-mono uppercase tracking-widest mb-4">
             <Sparkles className="h-3.5 w-3.5" /> Established 2006
           </span>
+          {/* Task 3: Exact H1 */}
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-white tracking-tight max-w-4xl mx-auto leading-tight">
-            Eighteen Years of Integrity in <span className="text-gradient-gold">Rajkot Real Estate</span>
+            About A TO Z Properties – <span className="text-gradient-gold">Goverdhan Chowk, Rajkot</span>
           </h1>
           <p className="mt-4 text-white/80 font-body text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            From our roots at Goverdhan Chowk to managing premier luxury homes and commercial hubs, we guide every client from A to Z with transparency.
+            Eighteen years of integrity in Rajkot real estate. From our roots at Goverdhan Chowk to managing premier luxury homes and commercial hubs, we guide every client from A to Z with transparency.
           </p>
         </div>
       </section>
@@ -240,8 +246,11 @@ export default function About() {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/properties">
-              <Button size="lg" className="bg-accent text-accent-foreground font-semibold px-8 hover:brightness-110">
-                Explore Properties <ArrowRight className="ml-2 h-4 w-4" />
+              <Button
+                size="lg"
+                className="h-11 px-8 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold shadow-md hover:shadow-xl rounded-full border border-amber-300/80 transition-all duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base flex items-center justify-center cursor-pointer"
+              >
+                Explore Properties <ArrowRight className="ml-2 h-4 w-4 text-stone-950" />
               </Button>
             </Link>
             <Link to="/inquiry">

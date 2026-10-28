@@ -23,6 +23,7 @@ const Inquiry = lazy(() => import("./pages/Inquiry"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BookSlot = lazy(() => import("./pages/BookSlot"));
 const About = lazy(() => import("./pages/About"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,24 @@ const AnimatedRoutes = () => {
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/about" element={<About />} />
           <Route path="/book" element={<BookSlot />} />
+
+          {/* 16 Area and Property-Type Landing Pages */}
+          <Route path="/flats-for-rent-rajkot" element={<LandingPage slugOverride="flats-for-rent-rajkot" />} />
+          <Route path="/2-bhk-flat-for-rent-rajkot" element={<LandingPage slugOverride="2-bhk-flat-for-rent-rajkot" />} />
+          <Route path="/3-bhk-flat-for-rent-rajkot" element={<LandingPage slugOverride="3-bhk-flat-for-rent-rajkot" />} />
+          <Route path="/furnished-flat-for-rent-rajkot" element={<LandingPage slugOverride="furnished-flat-for-rent-rajkot" />} />
+          <Route path="/office-for-rent-rajkot" element={<LandingPage slugOverride="office-for-rent-rajkot" />} />
+          <Route path="/shop-for-rent-rajkot" element={<LandingPage slugOverride="shop-for-rent-rajkot" />} />
+          <Route path="/bungalow-for-rent-rajkot" element={<LandingPage slugOverride="bungalow-for-rent-rajkot" />} />
+          <Route path="/rent-mavdi" element={<LandingPage slugOverride="rent-mavdi" />} />
+          <Route path="/rent-150-feet-ring-road" element={<LandingPage slugOverride="rent-150-feet-ring-road" />} />
+          <Route path="/rent-goverdhan-chowk" element={<LandingPage slugOverride="rent-goverdhan-chowk" />} />
+          <Route path="/rent-nana-mava" element={<LandingPage slugOverride="rent-nana-mava" />} />
+          <Route path="/rent-race-course" element={<LandingPage slugOverride="rent-race-course" />} />
+          <Route path="/rent-kalawad-road" element={<LandingPage slugOverride="rent-kalawad-road" />} />
+          <Route path="/rent-university-road" element={<LandingPage slugOverride="rent-university-road" />} />
+          <Route path="/rent-raiya-road" element={<LandingPage slugOverride="rent-raiya-road" />} />
+          <Route path="/rent-amin-marg" element={<LandingPage slugOverride="rent-amin-marg" />} />
           <Route
             path="/my-bookings"
             element={
@@ -129,7 +148,6 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   useEffect(() => {
-    generateFirebaseToken();
     const unsubscribe = onForegroundMessage((payload) => {
       if (payload?.notification?.body) {
         toast(payload.notification.body);

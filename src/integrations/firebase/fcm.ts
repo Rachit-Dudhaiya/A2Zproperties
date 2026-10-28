@@ -41,23 +41,23 @@ export async function registerAdminFcmToken(uid?: string) {
 }
 
 export function onForegroundMessage(handler: (payload: any) => void) {
-  if (!app) return () => undefined;
-  // Return a synchronous unsubscribe function. The actual setup is async
-  // because `isSupported()` returns a Promise. We capture the real
-  // unsubscribe when available and call it later.
+  if (!app || typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
+    return () => undefined;
+  }
   let unsubscribe: (() => void) | undefined = undefined;
-  isSupported().then((supported) => {
-    if (!supported) {
-      console.warn("FCM not supported in this browser");
-      return;
-    }
-    try {
-      const messaging = getMessaging(app);
-      unsubscribe = onMessage(messaging, handler as any) as unknown as () => void;
-    } catch (e) {
-      console.warn("onMessage setup failed", e);
-    }
-  }).catch((e) => console.warn("FCM isSupported() check failed", e));
+  isSupported()
+    .then((supported) => {
+      if (!supported) return;
+      try {
+        const messaging = getMessaging(app);
+        if (messaging) {
+          unsubscribe = onMessage(messaging, handler as any) as unknown as () => void;
+        }
+      } catch (e) {
+        console.warn("onMessage setup failed", e);
+      }
+    })
+    .catch((e) => console.warn("FCM isSupported() check failed", e));
 
   return () => {
     try {

@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -564,6 +565,7 @@ export default function BookSlot() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      <SEO title="Book a ₹200 Site Visit in Rajkot | A TO Z Properties" noindex />
       <Navbar />
 
       <main className="flex-1 py-8 sm:py-12">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MapPin, Maximize, Phone, CheckCircle2, Clock, IndianRupee, ZoomIn, ZoomOut, RefreshCw, Instagram } from "lucide-react";
+import { ArrowLeft, MapPin, Maximize, Phone, CheckCircle2, Clock, IndianRupee, ZoomIn, ZoomOut, RefreshCw, Instagram, MessageSquare, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,11 +14,26 @@ import ContactMenu from "@/components/ContactMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp, doc as fsDoc, getDoc as fsGetDoc, getDocs as fsGetDocs, query as fsQuery, orderBy as fsOrderBy } from "firebase/firestore";
-import { formatPrice, VISIT_CHARGE, MAX_PROPERTIES_PER_VISIT, PHONE_NUMBER, UPI_ID, GOOGLE_SHEET_URL } from "@/lib/data";
+import {
+  formatPrice,
+  VISIT_CHARGE,
+  MAX_PROPERTIES_PER_VISIT,
+  PHONE_NUMBER,
+  MAIN_PHONE,
+  MAIN_PHONE_DISPLAY,
+  SECONDARY_PHONE,
+  SECONDARY_PHONE_DISPLAY,
+  UPI_ID,
+  GOOGLE_SHEET_URL,
+  toTitleCase,
+  cleanListingText,
+  getOptimizedCloudinaryUrl,
+} from "@/lib/data";
 import PropertyDetailSkeleton from "@/components/PropertyDetailSkeleton";
 import { motion } from "framer-motion";
 import { openBookingWhatsApp } from "@/lib/whatsapp";
 import PropertyCard from "@/components/PropertyCard";
+import SEO from "@/components/SEO";
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,14 +91,23 @@ const PropertyDetail = () => {
       }
       setLoading(true);
       try {
-        const propRef = fsDoc(db, "properties", id);
-        const [propSnap, allSnap] = await Promise.all([
+        let propRef = fsDoc(db, "properties", id);
+        let [propSnap, allSnap] = await Promise.all([
           fsGetDoc(propRef),
           fsGetDocs(fsQuery(collection(db, "properties"), fsOrderBy("createdAt", "desc"))),
         ]);
+        if (!propSnap.exists() && id.includes("-")) {
+          const suffixId = id.split("-").pop();
+          if (suffixId) {
+            const fallbackSnap = await fsGetDoc(fsDoc(db, "properties", suffixId));
+            if (fallbackSnap.exists()) {
+              propSnap = fallbackSnap;
+            }
+          }
+        }
         if (cancelled) return;
         const propData = propSnap.exists() ? { id: propSnap.id, ...propSnap.data() } : null;
-        const allData = allSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.id !== id);
+        const allData = allSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.id !== propSnap.id);
         setProperty(propData);
         setAllProperties(allData);
       } catch (err: any) {
@@ -483,8 +507,61 @@ const PropertyDetail = () => {
     setPaymentScreenshotPreview(null);
   };
 
+  const bhkStr = property.bedrooms ? `${property.bedrooms} BHK` : cleanListingText(property.type || "Flat");
+  const areaStr = cleanListingText(property.location || property.address || "Rajkot");
+  const rentStr = property.price ? Number(property.price).toLocaleString("en-IN") : "";
+  const furnishingStr = property.furnishing || property.furnished || "Semi-Furnished";
+  const typeStr = property.type || "Flat";
+  const carpetStr = property.carpet_area || property.carpetArea || property.area || "Spacious";
+  const floorStr = property.floor || property.total_floors || "1st Floor";
+  const depositStr = property.deposit
+    ? formatPrice(property.deposit)
+    : property.security_deposit
+    ? formatPrice(property.security_deposit)
+    : "1 Month (Standard)";
+  const brokerageStr = property.brokerage || "1 Month Rent (Standard)";
+
+  // Task 3: Exact Title pattern
+  const pageTitle = `${bhkStr} for Rent in ${areaStr}, Rajkot – ₹${rentStr}/month | A TO Z`;
+  const pageDesc = `${bhkStr} ${furnishingStr} ${typeStr} for rent at ${areaStr}, Rajkot. ${carpetStr} sq ft, ₹${rentStr}/month. Call/WhatsApp for a site visit.`;
+  const pageH1 = `${bhkStr} ${toTitleCase(furnishingStr)} ${toTitleCase(typeStr)} for Rent – ${toTitleCase(areaStr)}, Rajkot`;
+
+  // Task 4: RealEstateListing JSON-LD Schema
+  const listingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": toTitleCase(property.title || pageH1),
+    "url": `https://www.atozproperties.co.in/property/${property.id}`,
+    "image":
+      Array.isArray(property.images) && property.images.length > 0
+        ? getOptimizedCloudinaryUrl(property.images[0], 1200)
+        : "https://www.atozproperties.co.in/og-image.jpg",
+    "datePosted": property.createdAt?.seconds
+      ? new Date(property.createdAt.seconds * 1000).toISOString()
+      : new Date().toISOString(),
+    "offers": {
+      "@type": "Offer",
+      "price": property.price || 0,
+      "priceCurrency": "INR",
+      "businessFunction": "http://purl.org/goodrelations/v1#LeaseOut",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={pageTitle}
+        description={pageDesc}
+        canonical={`https://www.atozproperties.co.in/property/${property.id}`}
+        ogTitle={pageTitle}
+        ogDescription={pageDesc}
+        ogImage={
+          Array.isArray(property.images) && property.images.length > 0
+            ? getOptimizedCloudinaryUrl(property.images[0], 1200)
+            : undefined
+        }
+        jsonLd={listingJsonLd}
+      />
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <Link to="/properties" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-body text-sm mb-6">
@@ -501,7 +578,14 @@ const PropertyDetail = () => {
                       images.map((src, i) => (
                         <CarouselItem key={`${src}-${i}`} className="h-full">
                           <div className="relative h-64 md:h-[420px] bg-muted rounded-lg overflow-hidden group/item" onClick={() => { setViewerIndex(i); setViewerOpen(true); }}>
-                            <img src={src} alt={`${property.title}-${i}`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                            <img
+                              src={getOptimizedCloudinaryUrl(src, i === 0 ? 1200 : 800)}
+                              alt={`${toTitleCase(property.title)}-${i}`}
+                              className="absolute inset-0 w-full h-full object-cover"
+                              loading={i === 0 ? "eager" : "lazy"}
+                              decoding="async"
+                              fetchPriority={i === 0 ? "high" : "auto"}
+                            />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                               <Maximize className="h-10 w-10 text-white" />
                             </div>
@@ -528,8 +612,8 @@ const PropertyDetail = () => {
                 </Carousel>
 
                 <div className="absolute top-4 left-4 flex gap-2 z-10">
-                  <Badge className="bg-secondary text-secondary-foreground font-body">{property.status}</Badge>
-                  <Badge variant="outline" className="bg-card/90 font-body">{property.type}</Badge>
+                  <Badge className="bg-secondary text-secondary-foreground font-body">{cleanListingText(property.status)}</Badge>
+                  <Badge variant="outline" className="bg-card/90 font-body">{cleanListingText(property.type)}</Badge>
                 </div>
               </div>
 
@@ -545,7 +629,14 @@ const PropertyDetail = () => {
                         selectedIndex === i ? "border-secondary" : "border-border",
                       )}
                     >
-                      <img src={src} alt={`${property.title}-thumb-${i}`} className="h-full w-full object-cover" loading="lazy" />
+                      <img
+                        src={getOptimizedCloudinaryUrl(src, 200)}
+                        alt={`${toTitleCase(property.title)}-thumb-${i}`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        width={80}
+                        height={64}
+                      />
                     </button>
                   ))}
                 </div>
@@ -555,14 +646,18 @@ const PropertyDetail = () => {
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
-                      {property.type} • {property.status}
+                      {cleanListingText(property.type)} • {cleanListingText(property.status)}
                     </span>
+                    {/* Task 3 & 4 H1 */}
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mt-1">
-                      {property.title}
+                      {pageH1}
                     </h1>
+                    <div className="text-sm font-body text-muted-foreground mt-0.5">
+                      Listing Title: {toTitleCase(property.title)}
+                    </div>
                     {(property.location || property.address) && (
                       <div className="flex items-center gap-2 mt-2 text-muted-foreground font-body text-sm sm:text-base">
-                        <MapPin className="h-4 w-4 text-accent shrink-0" /> {property.location || property.address}
+                        <MapPin className="h-4 w-4 text-accent shrink-0" /> {areaStr}
                       </div>
                     )}
 
@@ -589,41 +684,46 @@ const PropertyDetail = () => {
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-                      Verified Rental
+                      Verified Rental Listing
                     </span>
                   </div>
                 </div>
 
-                {/* Key Facts Quick Pills */}
-                <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {property.bedrooms && (
-                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
-                      <div className="text-xs text-muted-foreground font-body">Bedrooms</div>
-                      <div className="text-base font-display font-bold text-foreground mt-0.5">{property.bedrooms} BHK</div>
+                {/* Task 4: Near the top of each property page show rent, deposit, brokerage, carpet area, furnishing, floor and exact area name */}
+                <div className="mt-6 p-5 rounded-2xl bg-card border border-border/80 shadow-xs">
+                  <div className="text-xs font-mono font-semibold uppercase tracking-wider text-accent mb-3">
+                    Key Rental Facts &amp; Pricing Details
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-left">
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/50">
+                      <div className="text-[11px] text-muted-foreground font-body">Monthly Rent</div>
+                      <div className="text-sm font-display font-bold text-accent mt-0.5">{formatPrice(property.price)}</div>
                     </div>
-                  )}
-                  {property.bathrooms && (
-                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
-                      <div className="text-xs text-muted-foreground font-body">Bathrooms</div>
-                      <div className="text-base font-display font-bold text-foreground mt-0.5">{property.bathrooms} Bath</div>
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/50">
+                      <div className="text-[11px] text-muted-foreground font-body">Security Deposit</div>
+                      <div className="text-sm font-display font-bold text-foreground mt-0.5">{depositStr}</div>
                     </div>
-                  )}
-                  {(property.area || property.carpet_area || property.carpetArea) && (
-                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
-                      <div className="text-xs text-muted-foreground font-body">Carpet Area</div>
-                      <div className="text-base font-display font-bold text-foreground mt-0.5">
-                        {property.carpet_area || property.carpetArea || property.area} sqft
-                      </div>
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/50">
+                      <div className="text-[11px] text-muted-foreground font-body">Brokerage</div>
+                      <div className="text-sm font-display font-bold text-foreground mt-0.5">{brokerageStr}</div>
                     </div>
-                  )}
-                  {(property.furnishing || property.furnished) && (
-                    <div className="p-3.5 rounded-xl bg-card border border-border/80 shadow-xs text-left">
-                      <div className="text-xs text-muted-foreground font-body">Furnishing</div>
-                      <div className="text-base font-display font-bold text-foreground mt-0.5">
-                        {property.furnishing || property.furnished}
-                      </div>
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/50">
+                      <div className="text-[11px] text-muted-foreground font-body">Carpet Area</div>
+                      <div className="text-sm font-display font-bold text-foreground mt-0.5">{carpetStr} sqft</div>
                     </div>
-                  )}
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/50">
+                      <div className="text-[11px] text-muted-foreground font-body">Furnishing</div>
+                      <div className="text-sm font-display font-bold text-foreground mt-0.5">{toTitleCase(furnishingStr)}</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/50">
+                      <div className="text-[11px] text-muted-foreground font-body">Floor</div>
+                      <div className="text-sm font-display font-bold text-foreground mt-0.5">{floorStr}</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-muted/50 border border-border/50 col-span-2 sm:col-span-1">
+                      <div className="text-[11px] text-muted-foreground font-body">Exact Locality</div>
+                      <div className="text-sm font-display font-bold text-foreground mt-0.5 truncate">{areaStr}</div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Detailed Specifications Table */}
@@ -711,36 +811,90 @@ const PropertyDetail = () => {
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2.5">
+              {/* Action Buttons & Contact Box (Proper view call numbers) */}
+              <div className="space-y-3">
                 <Link to={`/book?propertyId=${property.id}`} className="block">
-                  <Button className="w-full h-12 bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-md text-sm">
-                    Book Site Visit
+                  <Button className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold shadow-md hover:shadow-xl rounded-full border border-amber-300/80 transition-all duration-300 hover:scale-[1.02] active:scale-95 text-sm sm:text-base flex items-center justify-center cursor-pointer">
+                    Book Site Visit (₹{VISIT_CHARGE})
                   </Button>
                 </Link>
 
-                <a
-                  href={`https://wa.me/91${PHONE_NUMBER}?text=${encodeURIComponent(
-                    `Hello A TO Z Properties, I am interested in viewing: ${property.title} (ID: ${property.id})`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <Button variant="outline" className="w-full h-11 border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-semibold text-sm">
-                    WhatsApp Inquiry
-                  </Button>
-                </a>
+                {/* User-friendly Contact Broker Desk Card */}
+                <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-sm space-y-3.5 text-xs font-body">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-border/60">
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <div className="w-8 h-8 rounded-full bg-accent/15 text-accent flex items-center justify-center font-bold text-xs">
+                          <Phone className="h-4 w-4" />
+                        </div>
+                        <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-card" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground leading-tight">A TO Z Broker Desk</h4>
+                        <p className="text-[11px] text-muted-foreground">Rajkot Rental Specialists</p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      ● Active
+                    </span>
+                  </div>
 
-                <ContactMenu phone={PHONE_NUMBER} className="block w-full">
-                  <Button variant="ghost" className="w-full h-10 text-muted-foreground hover:text-foreground text-xs">
-                    <Phone className="h-3.5 w-3.5 mr-1.5 text-accent" /> Direct Call: +91 {PHONE_NUMBER}
-                  </Button>
-                </ContactMenu>
-              </div>
+                  {/* Primary Number + Quick Action Buttons */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground font-medium text-xs">Primary Contact:</span>
+                      <a
+                        href={`tel:+91${MAIN_PHONE}`}
+                        className="text-base font-bold font-mono tracking-tight text-foreground hover:text-accent transition-colors"
+                      >
+                        +91 {MAIN_PHONE_DISPLAY}
+                      </a>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={`tel:+91${MAIN_PHONE}`}
+                        className="h-9 px-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-xs"
+                      >
+                        <Phone className="h-3.5 w-3.5 text-accent" /> Call Now
+                      </a>
+                      <a
+                        href={`https://wa.me/91${MAIN_PHONE}?text=${encodeURIComponent(
+                          `Hello A TO Z Properties, I am interested in viewing: ${toTitleCase(property.title)} (ID: ${property.id})`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-xs"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
+                      </a>
+                    </div>
+                  </div>
 
-              <div className="pt-2 text-center text-[11px] text-muted-foreground font-body">
-                Available slots: 10:00 AM – 1:00 PM & 4:00 PM – 10:00 PM
+                  {/* Secondary Number */}
+                  <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">Alternate Line:</p>
+                      <a
+                        href={`tel:+91${SECONDARY_PHONE}`}
+                        className="text-sm font-semibold font-mono tracking-tight text-foreground hover:text-accent transition-colors"
+                      >
+                        +91 {SECONDARY_PHONE_DISPLAY}
+                      </a>
+                    </div>
+                    <a
+                      href={`tel:+91${SECONDARY_PHONE}`}
+                      className="h-8 px-3 rounded-lg bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs flex items-center gap-1.5 border border-border/80 transition-all active:scale-95"
+                    >
+                      <Phone className="h-3.5 w-3.5 text-accent" /> Call
+                    </a>
+                  </div>
+
+                  {/* Timings */}
+                  <div className="pt-2 border-t border-border/60 text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-accent shrink-0" />
+                    <span>Office Hours: Mon–Sun 10:00 AM – 10:00 PM</span>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -782,211 +936,296 @@ const PropertyDetail = () => {
 
       {/* Image viewer modal (lightbox) */}
       {viewerOpen && images.length > 0 && (
-        <motion.div className="fixed inset-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <div className="absolute inset-0 bg-black/80 sm:bg-black" onClick={() => setViewerOpen(false)} />
-          <motion.div className="relative z-10 w-[90vw] h-[90vh] sm:w-screen sm:h-screen" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}>
-            <div className="w-full h-full bg-black rounded-lg overflow-hidden">
-              <div className="relative w-full h-full">
-                <div
-                  className={`w-full h-full bg-black flex items-center justify-center rounded-lg`}
-                  ref={containerRef}
-                  style={{ touchAction: 'none', cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in' }}
-                  onWheel={(e) => {
-                    if (e.ctrlKey) return; // allow browser zoom
-                    if (!viewerOpen) return;
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            onClick={() => setViewerOpen(false)}
+          />
+
+          <motion.div
+            className="relative z-10 w-full max-w-5xl bg-zinc-950/95 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[96vh]"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          >
+            {/* Top Control Bar */}
+            <div className="flex items-center justify-between px-3 sm:px-5 py-3 border-b border-white/10 bg-black/40 backdrop-blur-sm z-30">
+              <div className="min-w-0 pr-2">
+                <h4 className="text-sm sm:text-base font-semibold text-white truncate font-display">
+                  {toTitleCase(property.title)}
+                </h4>
+                <p className="text-xs text-white/60 font-medium">
+                  Photo {viewerIndex + 1} of {images.length}
+                  {property.location ? ` • ${cleanListingText(property.location)}` : ''}
+                </p>
+              </div>
+
+              {/* Actions: Zoom & Close */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div className="flex items-center bg-white/10 rounded-lg p-0.5 border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
+                    className="p-1.5 rounded-md hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                    title="Zoom Out"
+                    aria-label="Zoom Out"
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))}
+                    className="p-1.5 rounded-md hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                    title="Zoom In"
+                    aria-label="Zoom In"
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setZoom(1); setPanX(0); setPanY(0); setIsPanning(false); }}
+                    className="p-1.5 rounded-md hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+                    title="Reset Zoom"
+                    aria-label="Reset Zoom"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setViewerOpen(false)}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-red-500/80 text-white border border-white/10 transition-colors ml-1 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  aria-label="Close photo viewer"
+                  title="Close (Esc)"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Main Stage */}
+            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[50vh] max-h-[65vh] sm:max-h-[72vh] overflow-hidden select-none">
+              <div
+                className="w-full h-full flex items-center justify-center overflow-hidden"
+                ref={containerRef}
+                style={{ touchAction: 'none', cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in' }}
+                onWheel={(e) => {
+                  if (e.ctrlKey) return;
+                  if (!viewerOpen) return;
+                  e.preventDefault();
+                  const delta = -e.deltaY;
+                  if (Math.abs(delta) < 1) return;
+                  const step = 0.15;
+                  if (delta > 0) setZoom((z) => Math.min(3, +(z + step).toFixed(2)));
+                  else setZoom((z) => Math.max(1, +(z - step).toFixed(2)));
+                }}
+                onPointerDown={(e) => {
+                  if (zoom <= 1) return;
+                  isPanningRef.current = true;
+                  setIsPanning(true);
+                  lastPosRef.current = { x: e.clientX, y: e.clientY };
+                  try { (e.target as Element).setPointerCapture?.(e.pointerId); } catch {}
+                }}
+                onTouchStart={(e) => {
+                  if (!e.touches?.length) return;
+                  if (e.touches.length === 2) {
+                    const a = e.touches[0];
+                    const b = e.touches[1];
+                    const dx = b.clientX - a.clientX;
+                    const dy = b.clientY - a.clientY;
+                    pinchStartDistRef.current = Math.hypot(dx, dy);
+                    pinchStartZoomRef.current = zoom;
+                    pinchStartPanXRef.current = panX;
+                    pinchStartPanYRef.current = panY;
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                      pinchCenterRef.current = { x: (a.clientX + b.clientX) / 2 - rect.left, y: (a.clientY + b.clientY) / 2 - rect.top };
+                    } else pinchCenterRef.current = null;
+                    touchStartRef.current = null;
+                    return;
+                  }
+                  if (zoom > 1) return;
+                  const t = e.touches[0];
+                  touchStartRef.current = { x: t.clientX, y: t.clientY };
+                }}
+                onTouchMove={(e) => {
+                  if (e.touches?.length === 2 && pinchStartDistRef.current && pinchStartZoomRef.current) {
+                    const a = e.touches[0];
+                    const b = e.touches[1];
+                    const dx = b.clientX - a.clientX;
+                    const dy = b.clientY - a.clientY;
+                    const dist = Math.hypot(dx, dy);
+                    const startDist = pinchStartDistRef.current;
+                    if (startDist === 0) return;
+                    const scale = dist / startDist;
+                    const newZoom = Math.max(1, Math.min(3, +(pinchStartZoomRef.current! * scale).toFixed(3)));
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    const center = pinchCenterRef.current;
+                    const startPanX = pinchStartPanXRef.current ?? 0;
+                    const startPanY = pinchStartPanYRef.current ?? 0;
+                    if (rect && center) {
+                      const ratio = newZoom / (pinchStartZoomRef.current ?? 1);
+                      const cx = center.x;
+                      const cy = center.y;
+                      const candidateX = ratio * startPanX + (1 - ratio) * cx;
+                      const candidateY = ratio * startPanY + (1 - ratio) * cy;
+                      const { maxX, maxY } = getMaxPan();
+                      setPanX(clamp(candidateX, -maxX, maxX));
+                      setPanY(clamp(candidateY, -maxY, maxY));
+                    }
+                    setZoom(newZoom);
                     e.preventDefault();
-                    const delta = -e.deltaY;
-                    if (Math.abs(delta) < 1) return;
-                    const step = 0.15;
-                    if (delta > 0) setZoom((z) => Math.min(3, +(z + step).toFixed(2)));
-                    else setZoom((z) => Math.max(1, +(z - step).toFixed(2)));
-                  }}
-                  onPointerDown={(e) => {
-                    // start panning only for mouse/pointer when zoomed
-                    if (zoom <= 1) return;
-                    isPanningRef.current = true;
-                    setIsPanning(true);
-                    lastPosRef.current = { x: e.clientX, y: e.clientY };
-                    try { (e.target as Element).setPointerCapture?.(e.pointerId); } catch { }
-                  }}
-                  onTouchStart={(e) => {
-                    // record touch start for swipe detection (only when not zoomed)
-                    if (e.touches.length === 2) {
-                      // start pinch
-                      const a = e.touches[0];
-                      const b = e.touches[1];
-                      const dx = b.clientX - a.clientX;
-                      const dy = b.clientY - a.clientY;
-                      pinchStartDistRef.current = Math.hypot(dx, dy);
-                      pinchStartZoomRef.current = zoom;
-                      pinchStartPanXRef.current = panX;
-                      pinchStartPanYRef.current = panY;
-                      // center in container coordinates
-                      const rect = containerRef.current?.getBoundingClientRect();
-                      if (rect) {
-                        pinchCenterRef.current = { x: (a.clientX + b.clientX) / 2 - rect.left, y: (a.clientY + b.clientY) / 2 - rect.top };
-                      } else pinchCenterRef.current = null;
-                      // clear single-touch swipe start
-                      touchStartRef.current = null;
-                      return;
-                    }
-                    if (zoom > 1) return;
-                    const t = e.touches[0];
-                    touchStartRef.current = { x: t.clientX, y: t.clientY };
-                  }}
-                  onTouchMove={(e) => {
-                    if (e.touches.length === 2 && pinchStartDistRef.current && pinchStartZoomRef.current) {
-                      // pinch-to-zoom
-                      const a = e.touches[0];
-                      const b = e.touches[1];
-                      const dx = b.clientX - a.clientX;
-                      const dy = b.clientY - a.clientY;
-                      const dist = Math.hypot(dx, dy);
-                      const startDist = pinchStartDistRef.current;
-                      if (startDist === 0) return;
-                      const scale = dist / startDist;
-                      const newZoom = Math.max(1, Math.min(3, +(pinchStartZoomRef.current! * scale).toFixed(3)));
-                      // adjust pan so the pinch center stays focused
-                      const rect = containerRef.current?.getBoundingClientRect();
-                      const center = pinchCenterRef.current;
-                      const startPanX = pinchStartPanXRef.current ?? 0;
-                      const startPanY = pinchStartPanYRef.current ?? 0;
-                      if (rect && center) {
-                        const ratio = newZoom / (pinchStartZoomRef.current ?? 1);
-                        const cx = center.x;
-                        const cy = center.y;
-                        const candidateX = ratio * startPanX + (1 - ratio) * cx;
-                        const candidateY = ratio * startPanY + (1 - ratio) * cy;
-                        const { maxX, maxY } = getMaxPan();
-                        setPanX(clamp(candidateX, -maxX, maxX));
-                        setPanY(clamp(candidateY, -maxY, maxY));
-                      }
-                      setZoom(newZoom);
-                      e.preventDefault();
-                    }
-                  }}
-                  onTouchCancel={() => {
+                  }
+                }}
+                onTouchCancel={() => {
+                  pinchStartDistRef.current = null;
+                  pinchStartZoomRef.current = null;
+                  pinchStartPanXRef.current = null;
+                  pinchStartPanYRef.current = null;
+                  pinchCenterRef.current = null;
+                  touchStartRef.current = null;
+                }}
+                onTouchEnd={(e) => {
+                  if (pinchStartDistRef.current) {
                     pinchStartDistRef.current = null;
                     pinchStartZoomRef.current = null;
                     pinchStartPanXRef.current = null;
                     pinchStartPanYRef.current = null;
                     pinchCenterRef.current = null;
                     touchStartRef.current = null;
-                  }}
-                  onTouchEnd={(e) => {
-                    // if a pinch was active, clear pinch state
-                    if (pinchStartDistRef.current) {
-                      pinchStartDistRef.current = null;
-                      pinchStartZoomRef.current = null;
-                      pinchStartPanXRef.current = null;
-                      pinchStartPanYRef.current = null;
-                      pinchCenterRef.current = null;
+                    return;
+                  }
+                  if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                    const now = Date.now();
+                    if (lastTapRef.current && (now - lastTapRef.current) < 300) {
+                      setZoom(1);
+                      setPanX(0);
+                      setPanY(0);
+                      lastTapRef.current = null;
                       touchStartRef.current = null;
+                      e.preventDefault?.();
                       return;
                     }
-                    // double-tap to reset on small devices
-                    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-                      const now = Date.now();
-                      if (lastTapRef.current && (now - lastTapRef.current) < 300) {
-                        // double tap detected -> reset
-                        setZoom(1);
-                        setPanX(0);
-                        setPanY(0);
-                        lastTapRef.current = null;
-                        touchStartRef.current = null;
-                        e.preventDefault?.();
-                        return;
-                      }
-                      lastTapRef.current = now;
-                    }
-                    if (zoom > 1) return;
-                    if (!touchStartRef.current) return;
-                    // Only enable swipe on small screens
-                    if (typeof window !== 'undefined' && window.innerWidth >= 640) {
-                      touchStartRef.current = null;
-                      return;
-                    }
-                    const t = e.changedTouches[0];
-                    const dx = t.clientX - touchStartRef.current.x;
-                    const dy = t.clientY - touchStartRef.current.y;
+                    lastTapRef.current = now;
+                  }
+                  if (zoom > 1) return;
+                  if (!touchStartRef.current) return;
+                  const t = e.changedTouches?.[0];
+                  if (!t) {
                     touchStartRef.current = null;
-                    const absX = Math.abs(dx);
-                    const absY = Math.abs(dy);
-                    const threshold = 50; // px
-                    if (absX > threshold && absX > absY) {
-                      if (dx < 0 && images.length > 1) {
-                        // swipe left -> next
-                        setViewerIndex((i) => (i + 1) % images.length);
-                      } else if (dx > 0 && images.length > 1) {
-                        // swipe right -> prev
-                        setViewerIndex((i) => (i - 1 + images.length) % images.length);
-                      }
+                    return;
+                  }
+                  const dx = t.clientX - touchStartRef.current.x;
+                  const dy = t.clientY - touchStartRef.current.y;
+                  touchStartRef.current = null;
+                  const absX = Math.abs(dx);
+                  const absY = Math.abs(dy);
+                  const threshold = 40;
+                  if (absX > threshold && absX > absY) {
+                    if (dx < 0 && images.length > 1) {
+                      setViewerIndex((i) => (i + 1) % images.length);
+                    } else if (dx > 0 && images.length > 1) {
+                      setViewerIndex((i) => (i - 1 + images.length) % images.length);
                     }
+                  }
+                }}
+                onPointerMove={(e) => {
+                  if (!isPanningRef.current || !lastPosRef.current) return;
+                  const dx = e.clientX - lastPosRef.current.x;
+                  const dy = e.clientY - lastPosRef.current.y;
+                  lastPosRef.current = { x: e.clientX, y: e.clientY };
+                  const { maxX, maxY } = getMaxPan();
+                  setPanX((px) => clamp(px + dx, -maxX, maxX));
+                  setPanY((py) => clamp(py + dy, -maxY, maxY));
+                }}
+                onPointerUp={(e) => {
+                  if (!isPanningRef.current) return;
+                  isPanningRef.current = false;
+                  setIsPanning(false);
+                  lastPosRef.current = null;
+                  try { (e.target as Element).releasePointerCapture?.(e.pointerId); } catch {}
+                }}
+                onPointerCancel={() => { isPanningRef.current = false; setIsPanning(false); lastPosRef.current = null; }}
+              >
+                <img
+                  ref={imgRef}
+                  src={images[viewerIndex]}
+                  alt={`${property.title} - photo ${viewerIndex + 1}`}
+                  className="w-full h-full object-contain pointer-events-auto"
+                  onLoad={(e) => {
+                    const el = e.currentTarget;
+                    if (el && el.naturalWidth && el.naturalHeight) setNaturalSize({ w: el.naturalWidth, h: el.naturalHeight });
                   }}
-                  onPointerMove={(e) => {
-                    if (!isPanningRef.current || !lastPosRef.current) return;
-                    const dx = e.clientX - lastPosRef.current.x;
-                    const dy = e.clientY - lastPosRef.current.y;
-                    lastPosRef.current = { x: e.clientX, y: e.clientY };
-                    const { maxX, maxY } = getMaxPan();
-                    setPanX((px) => clamp(px + dx, -maxX, maxX));
-                    setPanY((py) => clamp(py + dy, -maxY, maxY));
+                  style={{
+                    transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+                    transformOrigin: 'center',
+                    transition: isPanning ? 'none' : 'transform 120ms',
                   }}
-                  onPointerUp={(e) => {
-                    if (!isPanningRef.current) return;
-                    isPanningRef.current = false;
-                    setIsPanning(false);
-                    lastPosRef.current = null;
-                    try { (e.target as Element).releasePointerCapture?.(e.pointerId); } catch { }
-                  }}
-                  onPointerCancel={() => { isPanningRef.current = false; setIsPanning(false); lastPosRef.current = null; }}
-                >
-                  <img
-                    ref={imgRef}
-                    src={images[viewerIndex]}
-                    alt={`property-view-${viewerIndex}`}
-                    className="w-full h-full object-contain"
-                    onLoad={(e) => {
-                      const el = e.currentTarget;
-                      if (el && el.naturalWidth && el.naturalHeight) setNaturalSize({ w: el.naturalWidth, h: el.naturalHeight });
-                    }}
-                    style={{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})`, transformOrigin: 'center', transition: isPanning ? 'none' : 'transform 120ms', cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in' }}
-                  />
-                </div>
-                <div className="absolute left-4 bottom-4 bg-black/60 text-white px-3 py-2 rounded-md z-40">
-                  <div className="text-sm font-semibold">{property.title}</div>
-                  <div className="text-xs opacity-80">Image {viewerIndex + 1} of {images.length}</div>
-                </div>
-                <div className="hidden sm:flex absolute top-1 left-1 sm:top-3 sm:left-3 flex items-center gap-2 z-50">
-                  <button onClick={() => setZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))} className="bg-white/90 text-black p-2 rounded shadow"> <ZoomOut className="h-4 w-4" /></button>
-                  <button onClick={() => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))} className="bg-white/90 text-black p-2 rounded shadow"> <ZoomIn className="h-4 w-4" /></button>
-                  <button onClick={() => { setZoom(1); setPanX(0); setPanY(0); setIsPanning(false); }} className="bg-white/90 text-black p-2 rounded shadow"> <RefreshCw className="h-4 w-4" /></button>
-                </div>
-                <button onClick={() => setViewerOpen(false)} className="absolute top-1 right-1 sm:top-3 sm:right-3 bg-white/90 text-black px-2 py-1 rounded text-sm z-50">Close</button>
-                {images.length > 1 && (
-                  <>
-                    <button onClick={() => setViewerIndex((i) => (i - 1 + images.length) % images.length)} className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 text-black px-4 py-2 rounded-full shadow">‹</button>
-                    <button onClick={() => setViewerIndex((i) => (i + 1) % images.length)} className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 text-black px-4 py-2 rounded-full shadow">›</button>
-                  </>
-                )}
-                {images.length > 1 && (
-                  <div className="absolute bottom-0 left-0 right-0 hidden sm:flex items-center gap-2 p-3 bg-gradient-to-t from-black/60 to-transparent rounded-b-lg">
-                    <div className="flex gap-2 overflow-x-auto w-full py-1">
-                      {images.map((thumb, ti) => (
-                        <button key={ti} onClick={() => setViewerIndex(ti)} className={`flex-none rounded-md overflow-hidden border ${ti === viewerIndex ? 'border-rose-500' : 'border-transparent'} hover:scale-105 transition-transform`}>
-                          <img src={getOptimizedUrl(thumb, { width: 80, height: 48 })} alt={`thumb-${ti}`} className="w-20 h-12 object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                />
               </div>
-              <div className="fixed right-6 z-50 text-black bg-white/30 backdrop-blur-sm p-2 rounded-lg text-xs font-bold opacity-70 pointer-events-none"  style={{marginTop:'-14vh'}}>
-        A to Z 
-      Properties
-      </div>
 
+              {/* Left / Right Navigation Chevrons - ALWAYS VISIBLE on both Mobile & Desktop */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setViewerIndex((i) => (i - 1 + images.length) % images.length);
+                    }}
+                    className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 transition-all shadow-xl active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent z-40"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setViewerIndex((i) => (i + 1) % images.length);
+                    }}
+                    className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 transition-all shadow-xl active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent z-40"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </button>
+                </>
+              )}
             </div>
+
+            {/* Bottom Thumbnail Strip - Responsive on Mobile & Desktop */}
+            {images.length > 1 && (
+              <div className="p-2 sm:p-3 bg-zinc-950/90 border-t border-white/10 z-30">
+                <div className="flex gap-2 overflow-x-auto py-1 px-1 scrollbar-thin scrollbar-thumb-white/20">
+                  {images.map((thumb, ti) => (
+                    <button
+                      key={ti}
+                      type="button"
+                      onClick={() => setViewerIndex(ti)}
+                      className={`flex-none rounded-lg overflow-hidden border-2 transition-all ${
+                        ti === viewerIndex
+                          ? 'border-accent ring-2 ring-accent/30 scale-105'
+                          : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/50'
+                      }`}
+                    >
+                      <img
+                        src={getOptimizedCloudinaryUrl(thumb, 90, 60,)}
+                        alt={`Thumbnail ${ti + 1}`}
+                        className="w-14 h-10 sm:w-20 sm:h-14 object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

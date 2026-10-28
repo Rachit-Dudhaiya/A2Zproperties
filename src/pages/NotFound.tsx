@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
 
 const NotFound = () => {
@@ -27,6 +28,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      <SEO title="404 Page Not Found | A TO Z Properties" noindex />
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center py-16 px-4 sm:px-6 relative overflow-hidden">
@@ -52,7 +54,7 @@ const NotFound = () => {
               Property Not Found
             </h1>
             <p className="text-sm text-muted-foreground font-body mt-2 leading-relaxed">
-              The address or page you are looking for has been relocated, sold, or doesn&apos;t exist in our current
+              The address or page you are looking for has been relocated, rented out, or doesn&apos;t exist in our current
               catalog.
             </p>
           </div>
@@ -75,17 +77,22 @@ const NotFound = () => {
 
           {/* Location Quick Tags */}
           <div className="pt-2">
-            <span className="text-xs text-muted-foreground block mb-2">Popular Rental Locations in Palitana:</span>
+            <span className="text-xs text-muted-foreground block mb-2 font-medium">Explore Popular Rajkot Rental Localities:</span>
             <div className="flex flex-wrap items-center justify-center gap-1.5">
-              {["Taleti Road", "Station Road", "Bhairav Para", "Main Bazaar"].map((loc) => (
-                <button
-                  key={loc}
-                  type="button"
-                  onClick={() => navigate(`/properties?location=${encodeURIComponent(loc)}`)}
-                  className="px-2.5 py-1 rounded-full text-xs bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+              {[
+                { name: "Mavdi", path: "/rent-mavdi" },
+                { name: "150 Feet Ring Road", path: "/rent-150-feet-ring-road" },
+                { name: "Nana Mava", path: "/rent-nana-mava" },
+                { name: "Race Course", path: "/rent-race-course" },
+                { name: "Kalawad Road", path: "/rent-kalawad-road" },
+              ].map((loc) => (
+                <Link
+                  key={loc.path}
+                  to={loc.path}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-foreground/80 hover:bg-primary hover:text-white transition-colors border border-border"
                 >
-                  {loc}
-                </button>
+                  {loc.name}
+                </Link>
               ))}
             </div>
           </div>

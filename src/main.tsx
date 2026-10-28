@@ -35,21 +35,24 @@ function showOverlay(message: string) {
 
 function renderApp() {
 	try {
-		createRoot(document.getElementById("root")!).render(<App />);
+		const rootEl = document.getElementById("root");
+		if (rootEl) {
+			createRoot(rootEl).render(<App />);
+		}
 	} catch (err: any) {
 		console.error("Render error:", err);
-		showOverlay('Error: ' + String(err));
+		if (import.meta.env.DEV) {
+			showOverlay('Render Error: ' + String(err));
+		}
 	}
 }
 
 window.addEventListener("error", (e) => {
 	console.error("Unhandled error:", e.error || e.message);
-	showOverlay('Unhandled error: ' + String(e.error || e.message));
 });
 
 window.addEventListener("unhandledrejection", (e) => {
 	console.error("Unhandled rejection:", e.reason);
-	showOverlay('Unhandled rejection: ' + String(e.reason));
 });
 
 renderApp();

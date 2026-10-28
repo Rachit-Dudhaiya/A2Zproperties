@@ -21,6 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
+import { MAIN_PHONE, MAIN_PHONE_DISPLAY, SECONDARY_PHONE, SECONDARY_PHONE_DISPLAY, OFFICE_ADDRESS, OFFICE_HOURS } from "@/lib/data";
 import { db, getIdToken } from "@/integrations/firebase/client";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
@@ -175,6 +177,11 @@ const Inquiry = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <SEO
+        title="Post Your Rental Requirement | A TO Z Properties"
+        description="Post your rental requirements for flats, offices, and bungalows across Rajkot. Real photos, physically checked, ₹200 site visits. WhatsApp 63533 88626."
+        canonical="https://www.atozproperties.co.in/inquiry"
+      />
       <Navbar />
 
       <section className="bg-primary/95 dark:bg-card border-b border-primary-foreground/10 text-primary-foreground py-12 text-center">
@@ -538,6 +545,21 @@ const Inquiry = () => {
             </form>
           </div>
         )}
+
+        <div className="mt-10 p-6 rounded-2xl bg-card border border-border text-center space-y-2 shadow-sm">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Prefer direct assistance?</p>
+          <p className="text-base font-semibold text-foreground">
+            Call / WhatsApp:{" "}
+            <a href={`tel:${MAIN_PHONE}`} className="text-primary hover:underline">{MAIN_PHONE_DISPLAY}</a>
+            {" · "}
+            <a href={`https://wa.me/${MAIN_PHONE.replace("+", "")}`} target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline">WhatsApp</a>
+            {" · Also: "}
+            <a href={`tel:${SECONDARY_PHONE}`} className="text-primary hover:underline">{SECONDARY_PHONE_DISPLAY}</a>
+          </p>
+          <p className="text-xs text-muted-foreground max-w-xl mx-auto">
+            {OFFICE_ADDRESS} • Hours: {OFFICE_HOURS}
+          </p>
+        </div>
       </div>
 
       <Footer />

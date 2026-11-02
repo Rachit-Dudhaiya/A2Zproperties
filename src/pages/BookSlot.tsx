@@ -76,6 +76,7 @@ export default function BookSlot() {
   const [showQr, setShowQr] = useState(false);
   const [timePeriodTab, setTimePeriodTab] = useState<"morning" | "evening">("morning");
   const [submitting, setSubmitting] = useState(false);
+  const [previousBookingCount, setPreviousBookingCount] = useState<number | null>(null);
 
   const [errors, setErrors] = useState<{
     name?: string;
@@ -113,7 +114,8 @@ export default function BookSlot() {
     property && (property.status === "For Rent" || (property.listed_by && String(property.status).toLowerCase().includes("rent")))
       ? Number(property.price || 0)
       : 0;
-  const totalDueNow = VISIT_CHARGE;
+  const isFirstBooking = previousBookingCount === 0;
+  const totalDueNow = isFirstBooking ? 0 : VISIT_CHARGE;
 
   const upiPayUrl = (() => {
     const note = property?.title ? `Site Visit - ${property.title}` : "Site Visit Booking";
@@ -179,6 +181,32 @@ export default function BookSlot() {
       }
     })();
   }, [propertyId]);
+
+  // The first authenticated booking is free; later bookings use the standard visit charge.
+  useEffect(() => {
+    if (!db || !user?.id) return;
+    (async () => {
+      try {
+        const q = fsQuery(collection(db, "bookings"), fsWhere("user_id", "==", user.id));
+        const snap = await fsGetDocs(q);
+        setPreviousBookingCount(snap.size);
+      } catch (err) {
+        console.warn("Failed to check booking history", err);
+        setPreviousBookingCount(null);
+      }
+    })();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (isFirstBooking) {
+      setPaymentMethod("free_first_booking");
+      setPaymentScreenshot(null);
+      setPaymentScreenshotPreview(null);
+      setShowQr(false);
+    } else if (paymentMethod === "free_first_booking") {
+      setPaymentMethod("cash_upi_on_visit");
+    }
+  }, [isFirstBooking, paymentMethod]);
 
   const toggleExtra = (pid: string) => {
     if (extraPropertyIds.includes(pid)) {
@@ -407,14 +435,24 @@ export default function BookSlot() {
       screenshot?: string;
     } = {};
 
+    if (previousBookingCount === null) {
+      toast({
+        title: "Checking booking eligibility",
+        description: "Please wait a moment while we confirm your first-booking offer.",
+      });
+      return;
+    }
+
     if (!name.trim()) nextErrors.name = "Name is required";
     if (!phone.trim()) nextErrors.phone = "Phone number is required";
     else if (!isValidPhone(phone)) nextErrors.phone = "Enter a valid phone number";
     if (!date) nextErrors.date = "Visit date is required";
     if (!slot) nextErrors.slot = "Please select a time slot";
     if (!caste.trim()) nextErrors.caste = "Caste / Community is required";
-    if (paymentMethod === "online" && !paymentScreenshot) nextErrors.screenshot = "Payment screenshot is required";
-    if (!agree) nextErrors.agree = "You must accept the ₹200 booking charge agreement";
+    if (!isFirstBooking && paymentMethod === "online" && !paymentScreenshot) nextErrors.screenshot = "Payment screenshot is required";
+    if (!agree) nextErrors.agree = isFirstBooking
+      ? "You must accept the free first booking agreement"
+      : "You must accept the ₹200 booking charge agreement";
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
@@ -468,7 +506,7 @@ export default function BookSlot() {
       }
 
       const bkRef = await addDoc(collection(db, "bookings"), {
-        user_id: user ? user.id : null,
+        user_id: user.id,
         name,
         phone,
         email: null,
@@ -477,19 +515,19 @@ export default function BookSlot() {
         visit_datetime: visitDateTime,
         caste,
         property_ids: selectedPropertyIds,
-        charge: VISIT_CHARGE,
+        charge: totalDueNow,
         brokerage: brokerage || 0,
         payment: {
           amount: totalDueNow,
-          status: paymentMethod === "online" ? "submitted" : "pending",
+          status: isFirstBooking ? "free" : paymentMethod === "online" ? "submitted" : "pending",
           method: paymentMethod,
-          breakdown: { visit: VISIT_CHARGE },
+          breakdown: { visit: totalDueNow },
         },
         status: "pending",
         createdAt: serverTimestamp(),
       });
 
-      if (paymentMethod === "online") {
+      if (!isFirstBooking && paymentMethod === "online") {
         await submitPaymentScreenshot(bkRef.id);
       }
 
@@ -590,7 +628,7 @@ export default function BookSlot() {
 
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-medium self-start sm:self-auto">
               <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>₹200 Standard Visit Charge</span>
+                <span>{previousBookingCount === null ? "Checking booking offer..." : isFirstBooking ? "First Visit Free" : "₹200 Standard Visit Charge"}</span>
             </div>
           </div>
 
@@ -1044,7 +1082,7 @@ export default function BookSlot() {
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between text-muted-foreground">
                         <span>Physical Accompaniment & Key Inspection Fee</span>
-                        <span className="font-semibold text-foreground">₹200</span>
+                        <span className="font-semibold text-foreground">{isFirstBooking ? "FREE" : `₹${VISIT_CHARGE}`}</span>
                       </div>
                       <div className="flex justify-between text-muted-foreground">
                         <span>Additional Property Coordination</span>
@@ -1052,7 +1090,7 @@ export default function BookSlot() {
                       </div>
                       <div className="border-t border-border/80 pt-2 flex justify-between text-sm font-bold text-foreground">
                         <span>Total Due Now</span>
-                        <span className="text-accent text-base">₹{totalDueNow}</span>
+                        <span className="text-accent text-base">{totalDueNow === 0 ? "FREE" : `₹${totalDueNow}`}</span>
                       </div>
                     </div>
 
@@ -1065,12 +1103,21 @@ export default function BookSlot() {
 
                   {/* Payment Method Selection */}
                   <div className="space-y-3">
-                    <label className="block text-sm font-medium text-foreground">Select Payment Method</label>
+                    <label className="block text-sm font-medium text-foreground">{isFirstBooking ? "First booking offer" : "Select Payment Method"}</label>
                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                       <SelectTrigger className="h-11">
                         <SelectValue placeholder="Choose payment method" />
                       </SelectTrigger>
                       <SelectContent>
+                        {isFirstBooking ? (
+                          <SelectItem value="free_first_booking">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                              <span>Free First Site Visit</span>
+                            </div>
+                          </SelectItem>
+                        ) : (
+                          <>
                         <SelectItem value="cash_upi_on_visit">
                           <div className="flex items-center gap-2">
                             <Banknote className="h-4 w-4 text-emerald-600" />
@@ -1083,12 +1130,14 @@ export default function BookSlot() {
                             <span>Pay Online Now via UPI / QR Code</span>
                           </div>
                         </SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Online UPI Payment Section */}
-                  {paymentMethod === "online" && (
+                  {!isFirstBooking && paymentMethod === "online" && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -1182,8 +1231,11 @@ export default function BookSlot() {
                         className="mt-0.5 rounded border-border text-primary focus:ring-primary h-4 w-4"
                       />
                       <div className="text-xs text-foreground font-body leading-relaxed">
-                        I agree to pay the standard <strong>₹200 non-refundable site visit fee</strong>, and I confirm
-                        that our party will be present on-time at the property location.
+                        {isFirstBooking ? (
+                          <>I agree to use the <strong>free first site visit offer</strong>, and I confirm</>
+                        ) : (
+                          <>I agree to pay the standard <strong>₹200 non-refundable site visit fee</strong>, and I confirm</>
+                        )} that our party will be present on-time at the property location.
                       </div>
                     </label>
                     {errors.agree && <p className="mt-1.5 text-xs text-destructive">{errors.agree}</p>}

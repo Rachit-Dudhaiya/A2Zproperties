@@ -87,7 +87,14 @@ const AnimatedRoutes = () => {
           <Route path="/property/:id" element={<PropertyDetail />} />
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/about" element={<About />} />
-          <Route path="/book" element={<BookSlot />} />
+          <Route
+            path="/book"
+            element={
+              <ProtectedRoute>
+                <BookSlot />
+              </ProtectedRoute>
+            }
+          />
 
           {/* 16 Area and Property-Type Landing Pages */}
           <Route path="/flats-for-rent-rajkot" element={<LandingPage slugOverride="flats-for-rent-rajkot" />} />

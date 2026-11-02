@@ -84,7 +84,7 @@ const Footer = () => {
             </li>
             <li>
               <Link to="/book" className="hover:text-accent transition-colors">
-                Book a Site Visit (₹200)
+                First Site Visit Free
               </Link>
             </li>
           </ul>
@@ -150,14 +150,6 @@ const Footer = () => {
                     className="hover:text-accent transition-colors"
                   >
                     +91 {MAIN_PHONE_DISPLAY}
-                  </a>
-                  <a
-                    href={`https://wa.me/${MAIN_PHONE.replace("+", "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-emerald-400 hover:text-emerald-300 text-xs px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/30 font-semibold"
-                  >
-                    WhatsApp
                   </a>
                 </div>
                 <div>

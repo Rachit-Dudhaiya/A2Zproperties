@@ -999,15 +999,15 @@ const Index = () => {
       <section className="bg-hero text-primary-foreground py-16 relative overflow-hidden">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10 text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white max-w-2xl mx-auto">
-            Tour 3 Properties for ₹200
+            Your First Property Tour Is Free
           </h2>
           <p className="mt-4 text-white/80 font-body max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
-            Convenient guided visits available 7 days a week: 10:00 AM – 1:00 PM & 4:00 PM – 10:00 PM. Book your slot online in under 60 seconds.
+            Tour up to 3 verified properties with a dedicated advisor. Your first guided visit is free; later visits are ₹200. Available 7 days a week: 10:00 AM – 1:00 PM & 4:00 PM – 10:00 PM.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/book">
-              <Button size="lg" className="bg-accent text-accent-foreground font-semibold px-8 hover:brightness-110">
-                Book Site Visit (₹200) <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="lg" className="group h-12 rounded-full bg-accent text-accent-foreground font-semibold px-8 shadow-[0_8px_24px_rgba(201,162,39,0.28)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.03] hover:brightness-110 hover:shadow-[0_14px_32px_rgba(201,162,39,0.42)] active:translate-y-0 active:scale-95 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
+                Book First Visit Free <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </Link>
             <a

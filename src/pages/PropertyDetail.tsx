@@ -751,9 +751,16 @@ const PropertyDetail = () => {
 
               {/* Action Buttons & Contact Box (Proper view call numbers) */}
               <div className="space-y-3">
-                <Link to={`/book?propertyId=${property.id}`} className="block">
+                <Link
+                  to={
+                    window.localStorage.getItem("a2z_auth_user")
+                      ? `/book?propertyId=${encodeURIComponent(property.id)}`
+                      : `/auth?redirect=${encodeURIComponent(`/book?propertyId=${property.id}`)}`
+                  }
+                  className="block"
+                >
                   <Button className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold shadow-md hover:shadow-xl rounded-full border border-amber-300/80 transition-all duration-300 hover:scale-[1.02] active:scale-95 text-sm sm:text-base flex items-center justify-center cursor-pointer">
-                    Book Site Visit (₹{VISIT_CHARGE})
+                    Book Site Visit
                   </Button>
                 </Link>
 

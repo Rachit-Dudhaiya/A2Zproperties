@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Building2,
   Mail,
@@ -34,6 +34,8 @@ const Auth = () => {
   const { signIn, signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectAfterAuth = searchParams.get("redirect") || "/";
 
   // Email / Password Submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,7 +67,7 @@ const Auth = () => {
         const { error } = await signIn(email, password);
         if (error) throw error;
         toast({ title: "Welcome back to A TO Z Properties!" });
-        navigate("/");
+        navigate(redirectAfterAuth);
       } else {
         const { error } = await signUp(email, password, fullName);
         if (error) throw error;
@@ -73,7 +75,7 @@ const Auth = () => {
           title: "Account Created Successfully!",
           description: "You are now logged in.",
         });
-        navigate("/");
+        navigate(redirectAfterAuth);
       }
     } catch (error: any) {
       toast({
@@ -113,7 +115,7 @@ const Auth = () => {
         title: "Welcome to A TO Z Properties!",
         description: `Signed in as ${user?.displayName || user?.email || "User"}.`,
       });
-      navigate("/");
+      navigate(redirectAfterAuth);
     } catch (err: any) {
       console.error("Google sign-in error:", err);
       let desc = err?.message || "Could not complete Google sign in.";

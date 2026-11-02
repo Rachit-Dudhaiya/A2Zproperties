@@ -361,7 +361,12 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                navigate(`/book?propertyId=${property.id}`);
+                const bookingPath = `/book?propertyId=${encodeURIComponent(property.id)}`;
+                if (window.localStorage.getItem("a2z_auth_user")) {
+                  navigate(bookingPath);
+                } else {
+                  navigate(`/auth?redirect=${encodeURIComponent(bookingPath)}`);
+                }
               }}
               className="h-8 px-3 text-xs bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-xs shrink-0"
             >

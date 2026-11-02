@@ -13,6 +13,7 @@ import {
   OFFICE_ADDRESS,
   OFFICE_HOURS,
   OFFICE_MAP_URL,
+  VISIT_CHARGE,
 } from "@/lib/data";
 import { db } from "@/integrations/firebase/client";
 import { collection, query as fsQuery, orderBy as fsOrderBy, onSnapshot, getDocs } from "firebase/firestore";
@@ -338,7 +339,7 @@ export default function LandingPage({ slugOverride }: LandingPageProps) {
                   Want an In-Person Property Visit?
                 </h2>
                 <p className="text-sm text-white/80 max-w-xl">
-                  Inspect genuine interiors with our executive for a flat ₹200 fee. No fake pictures, zero misrepresentation.
+                  Your first guided site visit is <strong className="text-accent">FREE</strong>. Every later site visit costs ₹{VISIT_CHARGE}. No fake pictures, zero misrepresentation.
                 </p>
                 {/* Standard Contact details */}
                 <p className="text-sm font-semibold text-accent pt-1">
@@ -358,8 +359,8 @@ export default function LandingPage({ slugOverride }: LandingPageProps) {
 
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <Link to="/book">
-                  <Button className="h-12 px-7 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold shadow-md hover:shadow-xl rounded-full border border-amber-300/80 transition-all duration-300 hover:scale-105 active:scale-95 text-sm sm:text-base flex items-center justify-center cursor-pointer">
-                    <CalendarCheck className="h-4 w-4 mr-2 text-stone-950" /> Book ₹200 Site Visit
+                  <Button className="group h-12 px-7 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold shadow-md hover:shadow-lg rounded-full border border-amber-300/80 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95 text-sm sm:text-base flex items-center justify-center cursor-pointer focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
+                    <CalendarCheck className="h-4 w-4 mr-2 text-stone-950 transition-transform duration-300 group-hover:scale-110" /> Book First Visit Free
                   </Button>
                 </Link>
                 <a

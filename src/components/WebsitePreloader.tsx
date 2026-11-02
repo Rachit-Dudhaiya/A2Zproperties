@@ -11,59 +11,40 @@ export const WebsitePreloader: React.FC = () => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Smooth percentage ticker over 2.6 seconds
-    const startTime = Date.now();
-    const duration = 2600; // 2.6s gives enough time to see the 3.2s isometric line animation
+    let finishTimer: ReturnType<typeof setTimeout> | undefined;
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
 
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(Math.round((elapsed / duration) * 100), 100);
-      setPercent(progress);
+    const finish = () => {
+      setPercent(100);
+      finishTimer = setTimeout(() => {
+        setFading(true);
+        hideTimer = setTimeout(() => {
+          setVisible(false);
+          document.body.style.overflow = originalOverflow;
+        }, 220);
+      }, 80);
+    };
 
-      if (progress >= 100) {
-        clearInterval(interval);
-        // Pause briefly at 100% then fade out smoothly
-        setTimeout(() => {
-          setFading(true);
-          setTimeout(() => {
-            setVisible(false);
-            document.body.style.overflow = originalOverflow;
-          }, 600); // 600ms smooth curtain fade
-        }, 250);
-      }
-    }, 40);
+    // Keep the handoff short; the route and its own loading state handle real work.
+    finishTimer = setTimeout(finish, 420);
 
     // Global helper so user can call window.showWebsiteLoader() in console or via button
     const handleReplay = () => {
+      if (finishTimer) clearTimeout(finishTimer);
+      if (hideTimer) clearTimeout(hideTimer);
       setVisible(true);
       setFading(false);
       setPercent(0);
       document.body.style.overflow = 'hidden';
-
-      const replayStart = Date.now();
-      const replayInterval = setInterval(() => {
-        const elapsed = Date.now() - replayStart;
-        const progress = Math.min(Math.round((elapsed / duration) * 100), 100);
-        setPercent(progress);
-
-        if (progress >= 100) {
-          clearInterval(replayInterval);
-          setTimeout(() => {
-            setFading(true);
-            setTimeout(() => {
-              setVisible(false);
-              document.body.style.overflow = originalOverflow;
-            }, 600);
-          }, 250);
-        }
-      }, 40);
+      finishTimer = setTimeout(finish, 420);
     };
 
     (window as any).showWebsiteLoader = handleReplay;
     window.addEventListener('trigger-website-loader', handleReplay);
 
     return () => {
-      clearInterval(interval);
+      if (finishTimer) clearTimeout(finishTimer);
+      if (hideTimer) clearTimeout(hideTimer);
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('trigger-website-loader', handleReplay);
     };

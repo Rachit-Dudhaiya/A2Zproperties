@@ -179,8 +179,7 @@
     @apply py-16 md:py-24;
   }
   .page-smooth-enter {
-    animation: pageFadeSlide 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-    will-change: opacity, transform;
+    animation: pageFadeSlide 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import {
   Search,
@@ -38,6 +38,7 @@ const Properties = () => {
   const [sortBy, setSortBy] = useState("featured");
   const [loading, setLoading] = useState(true);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const deferredSearch = useDeferredValue(search);
 
   useEffect(() => {
     const col = collection(db, "properties");
@@ -102,7 +103,7 @@ const Properties = () => {
   }, [search, typeFilter, locationFilter, statusFilter, budgetFilter]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
 
     const parsePrice = (p: any) => {
       const raw = p?.price;
@@ -197,7 +198,7 @@ const Properties = () => {
       const bFeatured = Boolean(b?.is_featured ?? b?.isFeatured);
       return Number(bFeatured) - Number(aFeatured);
     });
-  }, [allProperties, search, typeFilter, locationFilter, statusFilter, budgetFilter, sortBy]);
+  }, [allProperties, deferredSearch, typeFilter, locationFilter, statusFilter, budgetFilter, sortBy]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -651,4 +652,4 @@ const Properties = () => {
   );
 };
 
-export default Properties;
+export default Properties;

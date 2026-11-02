@@ -373,13 +373,15 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
       </div>
 
     {/* Reusable Lightbox Modal */}
-    <ImageLightbox
-      images={images}
-      initialIndex={viewerIndex}
-      isOpen={viewerOpen}
-      onClose={() => setViewerOpen(false)}
-      title={toTitleCase(property.title)}
-    />
+    {viewerOpen && (
+      <ImageLightbox
+        images={images}
+        initialIndex={viewerIndex}
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        title={toTitleCase(property.title)}
+      />
+    )}
 
     {/* keyboard navigation handled via top-level useEffect */}
 

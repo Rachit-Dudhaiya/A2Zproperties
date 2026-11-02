@@ -24,14 +24,17 @@
     <meta name="twitter:description" content="Flats, offices &amp; bungalows for rent across Rajkot. Real photos, physically checked. Book a ₹200 site visit or WhatsApp +91 63533 88626." />
     <meta name="twitter:image" content="https://www.atozproperties.co.in/og-image.jpg" />
 
+    <!-- LCP Preload Hero Image -->
+    <link rel="preload" as="image" href="/hero-bg.jpg" fetchpriority="high" />
+
     <!-- Google Fonts: Plus Jakarta Sans & Playfair Display -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/favicon.svg">
+    <link rel="icon" href="/az-logo-clean.png" type="image/png">
+    <link rel="apple-touch-icon" href="/az-logo-clean.png">
     <meta name="theme-color" content="#0F3D2E">
 
     <!-- Business Schema (RealEstateAgent JSON-LD - Task 7) -->
@@ -91,7 +94,42 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-preloader" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#ffffff;z-index:9999999;font-family:system-ui,-apple-system,sans-serif;">
+        <style>
+          @media (prefers-color-scheme: dark) {
+            #initial-preloader { background: #09090b !important; color: #fafafa !important; }
+            #initial-preloader .loader div div span { background: #38bdf8 !important; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important; }
+          }
+          #initial-preloader .loader { display:flex; justify-content:center; align-items:center; position:relative; width:90px; height:103px; }
+          #initial-preloader .loader div { position:absolute; width:50px; height:31px; }
+          #initial-preloader .loader div:nth-of-type(2) { transform:rotate(60deg); }
+          #initial-preloader .loader div:nth-of-type(3) { transform:rotate(-60deg); }
+          #initial-preloader .loader div div { width:100%; height:100%; position:relative; }
+          #initial-preloader .loader div div span { position:absolute; width:4px; height:0%; background:#053146; z-index:999999; border-radius:2px; }
+          #initial-preloader .h1 { left:0; animation:init-load1 3.2s ease infinite; }
+          #initial-preloader .h2 { right:0; animation:init-load2 3.2s ease 0.4s infinite; }
+          #initial-preloader .h3 { right:0; animation:init-load3 3.2s ease 0.8s infinite; }
+          #initial-preloader .h4 { top:10px; left:23px; animation:init-load4 3.2s ease 1s infinite; transform:rotate(90deg); }
+          #initial-preloader .h6 { left:0; animation:init-load6 3.2s ease 1.3s infinite; }
+          @keyframes init-load1 { 0%{bottom:0;height:0} 6.94%{bottom:0;height:100%} 50%{top:0;height:100%} 59.94%{top:0;height:0} }
+          @keyframes init-load2 { 0%{top:0;height:0} 6.94%{top:0;height:100%} 50%{bottom:0;height:100%} 59.94%{bottom:0;height:0} }
+          @keyframes init-load3 { 0%{top:0;height:0} 6.94%{top:0;height:100%} 50%{bottom:0;height:100%} 59.94%{bottom:0;height:0} }
+          @keyframes init-load4 { 0%{top:37px;left:23px;height:134%} 6.94%{top:10px;height:134%} 50%{bottom:10px;height:134%} 59.94%{bottom:0;height:0} }
+          @keyframes init-load6 { 0%{bottom:0;height:0} 6.94%{bottom:0;height:100%} 50%{top:0;height:100%} 59.94%{top:0;height:0} }
+        </style>
+        <section class="loader">
+          <div><div><span class="one h6"></span><span class="two h3"></span></div></div>
+          <div><div><span class="one h1"></span></div></div>
+          <div><div><span class="two h2"></span></div></div>
+          <div><div><span class="one h4"></span></div></div>
+        </section>
+        <div style="margin-top:24px;text-align:center;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:#0F3D2E;">A TO Z PROPERTIES</div>
+          <div style="font-size:10px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:#71717a;margin-top:4px;">Rajkot's Trusted Rental Network</div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

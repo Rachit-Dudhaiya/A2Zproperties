@@ -507,16 +507,17 @@ const Index = () => {
       <Navbar />
 
       {/* 1. Full-Bleed Hero Section with Dark Emerald Overlay & Floating Glass Search Card */}
-      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden pt-12 pb-24 md:pt-20 md:pb-32">
+      <section className="relative min-h-[70dvh] md:min-h-[85dvh] flex items-center justify-center overflow-hidden pt-12 pb-24 md:pt-20 md:pb-32">
         <img
           src={heroBg}
           alt="Luxury Architecture in Rajkot"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-[center_40%]"
           fetchPriority="high"
           loading="eager"
+          decoding="async"
         />
         {/* Layered Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/80 to-primary/95 dark:from-background/95 dark:via-background/85 dark:to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/80 to-primary/95 dark:from-background/95 dark:via-background/85 dark:to-background pointer-events-none" />
 
         <div className="relative z-10 container mx-auto max-w-7xl px-4 sm:px-6 flex flex-col items-center text-center">
           {/* Trust Pill */}
@@ -847,8 +848,9 @@ const Index = () => {
               <img
                 src={loc.image}
                 alt={loc.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110 [@media(hover:none)]:group-hover:scale-100"
                 loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 text-white text-left">

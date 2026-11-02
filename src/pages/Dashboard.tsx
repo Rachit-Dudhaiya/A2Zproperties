@@ -409,12 +409,22 @@ const Dashboard = () => {
                     src={image}
                     alt={title}
                     className="w-8 h-8 rounded-lg object-cover shrink-0 border border-border"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const fallback = e.currentTarget.parentElement?.querySelector(".dashboard-prop-fallback") as HTMLElement;
+                      if (fallback) fallback.style.display = "flex";
+                    }}
                   />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <Building className="h-4 w-4" />
-                  </div>
-                )}
+                ) : null}
+                <div
+                  className={`dashboard-prop-fallback w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 ${
+                    image ? "hidden" : "flex"
+                  }`}
+                >
+                  <Building className="h-4 w-4" />
+                </div>
                 <div className="min-w-0">
                   <div className="font-semibold text-xs text-foreground truncate max-w-[140px] sm:max-w-[200px]" title={title}>
                     {title}

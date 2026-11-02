@@ -12,6 +12,8 @@ import { Phone } from "lucide-react";
 import ContactMenu from "@/components/ContactMenu";
 import { Link } from "react-router-dom";
 import { openBookingWhatsApp } from "@/lib/whatsapp";
+import ResponsiveImage from "@/components/ResponsiveImage";
+import ImageLightbox from "@/components/ImageLightbox";
 
 interface Props {
   propertyId: string;
@@ -27,6 +29,9 @@ export default function PropertyModal({ propertyId, trigger }: Props) {
   const [date, setDate] = useState<string>("");
   const [slot, setSlot] = useState("");
   const [agree, setAgree] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [avatarError, setAvatarError] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -133,7 +138,33 @@ export default function PropertyModal({ propertyId, trigger }: Props) {
         <div className="space-y-4">
           {property && (
             <>
-              {/* Images removed from full details modal as requested */}
+              {/* Images preview strip with lightbox trigger */}
+              {Array.isArray(property.images) && property.images.length > 0 && (
+                <div className="mt-1">
+                  <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-border">
+                    {property.images.map((img: string, idx: number) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setLightboxIndex(idx);
+                          setLightboxOpen(true);
+                        }}
+                        className="relative h-16 w-24 shrink-0 rounded-xl overflow-hidden border border-border hover:border-primary transition-all group focus:outline-none focus:ring-2 focus:ring-primary"
+                        title="Click to view full image in lightbox"
+                      >
+                        <ResponsiveImage
+                          src={img}
+                          alt={`${property.title} preview ${idx + 1}`}
+                          ratio="none"
+                          className="w-full h-full"
+                          imageClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-2">
                 <div className="flex items-start justify-between">
@@ -199,8 +230,17 @@ export default function PropertyModal({ propertyId, trigger }: Props) {
                 <div className="mt-4 border-t pt-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                        {property.agent_avatar ? <img src={property.agent_avatar} alt={property.agent_name || "Agent"} className="w-full h-full object-cover" /> : <div className="text-muted-foreground">AZ</div>}
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border shrink-0">
+                        {property.agent_avatar && !avatarError ? (
+                          <img
+                            src={property.agent_avatar}
+                            alt={property.agent_name || "Agent"}
+                            className="w-full h-full object-cover"
+                            onError={() => setAvatarError(true)}
+                          />
+                        ) : (
+                          <div className="text-muted-foreground font-bold text-xs">AZ</div>
+                        )}
                       </div>
                       <div>
                         <div className="font-medium">{property.listed_by === 'ATOZ PROPERTIES' ? 'ATOZ PROPERTIES' : (property.agent_name || property.owner_name || 'Agent')}</div>
@@ -219,6 +259,15 @@ export default function PropertyModal({ propertyId, trigger }: Props) {
             </>
           )}
         </div>
+        {Array.isArray(property?.images) && property.images.length > 0 && (
+          <ImageLightbox
+            images={property.images}
+            initialIndex={lightboxIndex}
+            isOpen={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            title={property?.title || "Property"}
+          />
+        )}
         <DialogFooter />
       </DialogContent>
     </Dialog>

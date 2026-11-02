@@ -28,6 +28,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [authLogoError, setAuthLogoError] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
 
   const { signIn, signUp, signInWithGoogle } = useAuth();
@@ -161,9 +162,18 @@ const Auth = () => {
           {/* Header & Logo */}
           <div className="text-center mb-6">
             <Link to="/" className="inline-flex items-center justify-center gap-2 mb-3 group">
-              <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-                <Building2 className="h-6 w-6 text-accent" />
-              </div>
+              {!authLogoError ? (
+                <img
+                  src="/az-logo-clean.png"
+                  alt="A TO Z Properties"
+                  className="h-16 w-auto rounded-2xl object-contain shadow-md ring-1 ring-border group-hover:scale-105 transition-transform"
+                  onError={() => setAuthLogoError(true)}
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                  <Building2 className="h-6 w-6 text-accent" />
+                </div>
+              )}
             </Link>
 
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground tracking-tight">

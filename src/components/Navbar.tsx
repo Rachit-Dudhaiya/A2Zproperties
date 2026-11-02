@@ -13,6 +13,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     let ticking = false;
@@ -64,11 +65,20 @@ const Navbar = () => {
           className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
           aria-label="A TO Z Properties Home"
         >
-          <img
-            src="/az-logo-clean.png"
-            alt="A TO Z Properties"
-            className="h-10 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
-          />
+          <div className="h-10 sm:h-11 w-10 sm:w-11 relative flex items-center justify-center shrink-0">
+            {!logoError ? (
+              <img
+                src="/az-logo-clean.png"
+                alt="A TO Z Properties"
+                className="h-10 sm:h-11 w-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-accent text-accent-foreground font-bold font-display flex items-center justify-center text-sm shadow-md">
+                AZ
+              </div>
+            )}
+          </div>
           <div className="leading-tight">
             <div className="font-display font-bold text-lg text-primary-foreground tracking-tight">
               A TO Z <span className="text-accent font-normal text-sm">PROPERTIES</span>

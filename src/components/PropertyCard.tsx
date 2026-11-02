@@ -1,8 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, BedDouble, Bath, Maximize, ZoomIn, ZoomOut, RefreshCw, Calendar, Sparkles, Instagram, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import ResponsiveImage from "@/components/ResponsiveImage";
+import ImageLightbox from "@/components/ImageLightbox";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { formatPrice, toTitleCase, cleanListingText, getOptimizedCloudinaryUrl } from "@/lib/data";
+import { formatPrice, toTitleCase, cleanListingText } from "@/lib/data";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -185,13 +187,13 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                 setViewerOpen(true);
               }
             }}
-            className="relative aspect-[16/10] w-full bg-muted/60 overflow-hidden cursor-pointer select-none"
+            className="group/image relative aspect-[4/3] sm:aspect-[16/10] w-full bg-muted/60 overflow-hidden cursor-pointer select-none"
             aria-label={`View photos for ${toTitleCase(property.title)}`}
             title="Click to view full photos"
           >
             {Array.isArray(property.images) && property.images.length > 1 ? (
-              <div onClick={(e) => e.stopPropagation()}>
-                <Carousel className="w-full h-full">
+              <div className="h-full" onClick={(e) => e.stopPropagation()}>
+                <Carousel className="w-full h-full [&>div]:h-full">
                   <CarouselPrevious
                     onClick={(e) => e.stopPropagation()}
                     className="left-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 h-8 w-8 bg-black/50 text-white border-0 hover:bg-black/70"
@@ -204,7 +206,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                     {property.images.map((src: string, i: number) => (
                       <CarouselItem
                         key={i}
-                        className="pl-0 h-full cursor-pointer"
+                        className="group/image pl-0 h-full cursor-pointer"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -213,14 +215,15 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                         }}
                       >
                         {src ? (
-                          <img
-                            src={getOptimizedCloudinaryUrl(src, 400)}
+                          <ResponsiveImage
+                            src={src}
                             alt={`${toTitleCase(property.title)} view ${i + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                            ratio="none"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="w-full h-full"
+                            imageClassName="transition-transform duration-700 ease-out group-hover/image:scale-105"
                             loading="lazy"
-                            decoding="async"
-                            width={400}
-                            height={250}
+                            priority={index < 4 && i < 2}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted">No image</div>
@@ -231,14 +234,15 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                 </Carousel>
               </div>
             ) : imgSrc && !imgError ? (
-              <img
-                src={getOptimizedCloudinaryUrl(imgSrc, 400)}
+              <ResponsiveImage
+                src={imgSrc}
                 alt={toTitleCase(property.title)}
-                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                ratio="none"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="w-full h-full"
+                imageClassName="transition-transform duration-700 ease-out group-hover/image:scale-105"
                 loading="lazy"
-                decoding="async"
-                width={400}
-                height={250}
+                priority={index < 4}
                 onError={() => setImgError(true)}
               />
             ) : (
@@ -248,10 +252,10 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
             )}
 
             {/* Gradient Overlay on bottom of image for readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent pointer-events-none" />
 
             {/* Floating Top Badges */}
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 z-20">
+            <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-20 max-w-[65%]">
               <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide uppercase shadow-sm bg-primary text-primary-foreground border border-primary-foreground/20 backdrop-blur-md">
                 {cleanListingText(property.status)}
               </span>
@@ -270,7 +274,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
             )}
 
             {/* Floating Price Pill Bottom-Left */}
-            <div className="absolute bottom-3 left-3 z-20">
+            <div className="absolute bottom-3 left-3 z-20 max-w-[70%]">
               <div className="px-3 py-1 rounded-xl bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-md">
                 <span className="font-display font-bold text-base sm:text-lg tracking-tight">
                   {formatPrice(property.price)}
@@ -340,7 +344,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
           </Link>
 
           {/* Footer Action Row */}
-          <div className="px-4 pb-4 pt-1 flex items-center justify-between gap-2 border-t border-border/40">
+          <div className="px-4 pb-4 pt-1 flex flex-wrap items-center justify-between gap-2 border-t border-border/40">
             {walkthroughUrl ? (
               <button
                 type="button"
@@ -368,7 +372,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                 e.stopPropagation();
                 navigate(`/book?propertyId=${property.id}`);
               }}
-              className="h-8 px-3 text-xs bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-xs"
+              className="h-8 px-3 text-xs bg-accent text-accent-foreground hover:brightness-110 font-semibold shadow-xs shrink-0"
             >
               <Calendar className="h-3 w-3 mr-1" />
               Book Visit
@@ -377,301 +381,14 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
         </div>
       </div>
 
-    {/* Image viewer modal (lightbox) */}
-    {viewerOpen && images.length > 0 && (
-      <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/90 backdrop-blur-md"
-          onClick={() => setViewerOpen(false)}
-        />
-
-        <motion.div
-          className="relative z-10 w-full max-w-5xl bg-zinc-950/95 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[96vh]"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        >
-          {/* Top Control Bar */}
-          <div className="flex items-center justify-between px-3 sm:px-5 py-3 border-b border-white/10 bg-black/40 backdrop-blur-sm z-30">
-            <div className="min-w-0 pr-2">
-              <h4 className="text-sm sm:text-base font-semibold text-white truncate font-display">
-                {toTitleCase(property.title)}
-              </h4>
-              <p className="text-xs text-white/60 font-medium">
-                Photo {viewerIndex + 1} of {images.length}
-                {property.location ? ` • ${cleanListingText(property.location)}` : ''}
-              </p>
-            </div>
-
-            {/* Actions: Zoom & Close */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <div className="flex items-center bg-white/10 rounded-lg p-0.5 border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
-                  className="p-1.5 rounded-md hover:bg-white/20 text-white/80 hover:text-white transition-colors"
-                  title="Zoom Out"
-                  aria-label="Zoom Out"
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))}
-                  className="p-1.5 rounded-md hover:bg-white/20 text-white/80 hover:text-white transition-colors"
-                  title="Zoom In"
-                  aria-label="Zoom In"
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setZoom(1); setPanX(0); setPanY(0); setIsPanning(false); }}
-                  className="p-1.5 rounded-md hover:bg-white/20 text-white/80 hover:text-white transition-colors"
-                  title="Reset Zoom"
-                  aria-label="Reset Zoom"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setViewerOpen(false)}
-                className="p-2 rounded-lg bg-white/10 hover:bg-red-500/80 text-white border border-white/10 transition-colors ml-1 focus:outline-none focus:ring-2 focus:ring-rose-500"
-                aria-label="Close photo viewer"
-                title="Close (Esc)"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Main Stage */}
-          <div className="relative flex-1 bg-black flex items-center justify-center min-h-[50vh] max-h-[65vh] sm:max-h-[72vh] overflow-hidden select-none">
-            <div
-              className="w-full h-full flex items-center justify-center overflow-hidden"
-              ref={containerRef}
-              style={{ touchAction: 'none', cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in' }}
-              onWheel={(e) => {
-                if (e.ctrlKey) return;
-                if (!viewerOpen) return;
-                e.preventDefault();
-                const delta = -e.deltaY;
-                if (Math.abs(delta) < 1) return;
-                const step = 0.15;
-                if (delta > 0) setZoom((z) => Math.min(3, +(z + step).toFixed(2)));
-                else setZoom((z) => Math.max(1, +(z - step).toFixed(2)));
-              }}
-              onPointerDown={(e) => {
-                if (zoom <= 1) return;
-                isPanningRef.current = true;
-                setIsPanning(true);
-                lastPosRef.current = { x: e.clientX, y: e.clientY };
-                try { (e.target as Element).setPointerCapture?.(e.pointerId); } catch {}
-              }}
-              onTouchStart={(e) => {
-                if (!e.touches?.length) return;
-                if (e.touches.length === 2) {
-                  const a = e.touches[0];
-                  const b = e.touches[1];
-                  const dx = b.clientX - a.clientX;
-                  const dy = b.clientY - a.clientY;
-                  pinchStartDistRef.current = Math.hypot(dx, dy);
-                  pinchStartZoomRef.current = zoom;
-                  pinchStartPanXRef.current = panX;
-                  pinchStartPanYRef.current = panY;
-                  const rect = containerRef.current?.getBoundingClientRect();
-                  if (rect) {
-                    pinchCenterRef.current = { x: (a.clientX + b.clientX) / 2 - rect.left, y: (a.clientY + b.clientY) / 2 - rect.top };
-                  } else pinchCenterRef.current = null;
-                  touchStartRef.current = null;
-                  return;
-                }
-                if (zoom > 1) return;
-                const t = e.touches[0];
-                touchStartRef.current = { x: t.clientX, y: t.clientY };
-              }}
-              onTouchMove={(e) => {
-                if (e.touches?.length === 2 && pinchStartDistRef.current && pinchStartZoomRef.current) {
-                  const a = e.touches[0];
-                  const b = e.touches[1];
-                  const dx = b.clientX - a.clientX;
-                  const dy = b.clientY - a.clientY;
-                  const dist = Math.hypot(dx, dy);
-                  const startDist = pinchStartDistRef.current;
-                  if (startDist === 0) return;
-                  const scale = dist / startDist;
-                  const newZoom = Math.max(1, Math.min(3, +(pinchStartZoomRef.current! * scale).toFixed(3)));
-                  const rect = containerRef.current?.getBoundingClientRect();
-                  const center = pinchCenterRef.current;
-                  const startPanX = pinchStartPanXRef.current ?? 0;
-                  const startPanY = pinchStartPanYRef.current ?? 0;
-                  if (rect && center) {
-                    const ratio = newZoom / (pinchStartZoomRef.current ?? 1);
-                    const cx = center.x;
-                    const cy = center.y;
-                    const candidateX = ratio * startPanX + (1 - ratio) * cx;
-                    const candidateY = ratio * startPanY + (1 - ratio) * cy;
-                    const { maxX, maxY } = getMaxPan();
-                    setPanX(clamp(candidateX, -maxX, maxX));
-                    setPanY(clamp(candidateY, -maxY, maxY));
-                  }
-                  setZoom(newZoom);
-                  e.preventDefault();
-                }
-              }}
-              onTouchCancel={() => {
-                pinchStartDistRef.current = null;
-                pinchStartZoomRef.current = null;
-                pinchStartPanXRef.current = null;
-                pinchStartPanYRef.current = null;
-                pinchCenterRef.current = null;
-                touchStartRef.current = null;
-              }}
-              onTouchEnd={(e) => {
-                if (pinchStartDistRef.current) {
-                  pinchStartDistRef.current = null;
-                  pinchStartZoomRef.current = null;
-                  pinchStartPanXRef.current = null;
-                  pinchStartPanYRef.current = null;
-                  pinchCenterRef.current = null;
-                  touchStartRef.current = null;
-                  return;
-                }
-                if (typeof window !== 'undefined' && window.innerWidth < 640) {
-                  const now = Date.now();
-                  if (lastTapRef.current && (now - lastTapRef.current) < 300) {
-                    setZoom(1);
-                    setPanX(0);
-                    setPanY(0);
-                    lastTapRef.current = null;
-                    touchStartRef.current = null;
-                    e.preventDefault?.();
-                    return;
-                  }
-                  lastTapRef.current = now;
-                }
-                if (zoom > 1) return;
-                if (!touchStartRef.current) return;
-                const t = e.changedTouches?.[0];
-                if (!t) {
-                  touchStartRef.current = null;
-                  return;
-                }
-                const dx = t.clientX - touchStartRef.current.x;
-                const dy = t.clientY - touchStartRef.current.y;
-                touchStartRef.current = null;
-                const absX = Math.abs(dx);
-                const absY = Math.abs(dy);
-                const threshold = 40;
-                if (absX > threshold && absX > absY) {
-                  if (dx < 0 && images.length > 1) {
-                    setViewerIndex((i) => (i + 1) % images.length);
-                  } else if (dx > 0 && images.length > 1) {
-                    setViewerIndex((i) => (i - 1 + images.length) % images.length);
-                  }
-                }
-              }}
-              onPointerMove={(e) => {
-                if (!isPanningRef.current || !lastPosRef.current) return;
-                const dx = e.clientX - lastPosRef.current.x;
-                const dy = e.clientY - lastPosRef.current.y;
-                lastPosRef.current = { x: e.clientX, y: e.clientY };
-                const { maxX, maxY } = getMaxPan();
-                setPanX((px) => clamp(px + dx, -maxX, maxX));
-                setPanY((py) => clamp(py + dy, -maxY, maxY));
-              }}
-              onPointerUp={(e) => {
-                if (!isPanningRef.current) return;
-                isPanningRef.current = false;
-                setIsPanning(false);
-                lastPosRef.current = null;
-                try { (e.target as Element).releasePointerCapture?.(e.pointerId); } catch {}
-              }}
-              onPointerCancel={() => { isPanningRef.current = false; setIsPanning(false); lastPosRef.current = null; }}
-            >
-              <img
-                ref={imgRef}
-                src={images[viewerIndex]}
-                alt={`${property.title} - photo ${viewerIndex + 1}`}
-                className="w-full h-full object-contain pointer-events-auto"
-                onLoad={(e) => {
-                  const el = e.currentTarget;
-                  if (el && el.naturalWidth && el.naturalHeight) setNaturalSize({ w: el.naturalWidth, h: el.naturalHeight });
-                }}
-                style={{
-                  transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
-                  transformOrigin: 'center',
-                  transition: isPanning ? 'none' : 'transform 120ms',
-                }}
-              />
-            </div>
-
-            {/* Left / Right Navigation Chevrons - ALWAYS VISIBLE on both Mobile & Desktop */}
-            {images.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setViewerIndex((i) => (i - 1 + images.length) % images.length);
-                  }}
-                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 transition-all shadow-xl active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent z-40"
-                  aria-label="Previous image"
-                >
-                  <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setViewerIndex((i) => (i + 1) % images.length);
-                  }}
-                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 transition-all shadow-xl active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent z-40"
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Bottom Thumbnail Strip - Responsive on Mobile & Desktop */}
-          {images.length > 1 && (
-            <div className="p-2 sm:p-3 bg-zinc-950/90 border-t border-white/10 z-30">
-              <div className="flex gap-2 overflow-x-auto py-1 px-1 scrollbar-thin scrollbar-thumb-white/20">
-                {images.map((thumb, ti) => (
-                  <button
-                    key={ti}
-                    type="button"
-                    onClick={() => setViewerIndex(ti)}
-                    className={`flex-none rounded-lg overflow-hidden border-2 transition-all ${
-                      ti === viewerIndex
-                        ? 'border-accent ring-2 ring-accent/30 scale-105'
-                        : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/50'
-                    }`}
-                  >
-                    <img
-                      src={getOptimizedUrl(thumb, { width: 90, height: 60 })}
-                      alt={`Thumbnail ${ti + 1}`}
-                      className="w-14 h-10 sm:w-20 sm:h-14 object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </motion.div>
-    )}
+    {/* Reusable Lightbox Modal */}
+    <ImageLightbox
+      images={images}
+      initialIndex={viewerIndex}
+      isOpen={viewerOpen}
+      onClose={() => setViewerOpen(false)}
+      title={toTitleCase(property.title)}
+    />
 
     {/* keyboard navigation handled via top-level useEffect */}
 

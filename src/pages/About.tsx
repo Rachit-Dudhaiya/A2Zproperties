@@ -123,38 +123,42 @@ export default function About() {
           <div className="lg:col-span-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-4">
-                <div className="rounded-2xl overflow-hidden aspect-[3/4] shadow-card border border-border">
+                <div className="relative rounded-2xl overflow-hidden aspect-[3/4] shadow-card border border-border bg-muted">
                   <img
                     src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80"
                     alt="Modern Villa in Rajkot"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-cover hover:scale-105 [@media(hover:none)]:hover:scale-100 transition-transform duration-500"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
-                <div className="rounded-2xl overflow-hidden aspect-[4/3] shadow-card border border-border">
+                <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-card border border-border bg-muted">
                   <img
                     src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&auto=format&fit=crop&q=80"
                     alt="Apartment Corridor"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-cover hover:scale-105 [@media(hover:none)]:hover:scale-100 transition-transform duration-500"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
               </div>
               <div className="pt-8 space-y-4">
-                <div className="rounded-2xl overflow-hidden aspect-[4/3] shadow-card border border-border">
+                <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-card border border-border bg-muted">
                   <img
                     src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80"
                     alt="Corporate Office rajkot"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-cover hover:scale-105 [@media(hover:none)]:hover:scale-100 transition-transform duration-500"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
-                <div className="rounded-2xl overflow-hidden aspect-[3/4] shadow-card border border-border">
+                <div className="relative rounded-2xl overflow-hidden aspect-[3/4] shadow-card border border-border bg-muted">
                   <img
                     src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&auto=format&fit=crop&q=80"
                     alt="Architectural Luxury Interior"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-cover hover:scale-105 [@media(hover:none)]:hover:scale-100 transition-transform duration-500"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
               </div>

@@ -9,17 +9,17 @@ const PropertyDetailSkeleton = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          {/* Image Carousel Skeleton */}
-          <div className="relative h-64 md:h-[420px] bg-muted rounded-lg overflow-hidden">
-            <Skeleton height="100%" />
+          {/* Image Gallery Skeleton (16:9 desktop, 4:3 mobile) */}
+          <div className="relative aspect-[4/3] md:aspect-video w-full bg-muted rounded-2xl overflow-hidden">
+            <Skeleton height="100%" className="absolute inset-0" />
           </div>
 
           {/* Thumbnails Skeleton */}
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            <Skeleton width={80} height={64} />
-            <Skeleton width={80} height={64} />
-            <Skeleton width={80} height={64} />
-            <Skeleton width={80} height={64} />
+          <div className="hidden md:flex mt-3 gap-2.5 overflow-x-auto pb-1.5">
+            <Skeleton width={96} height={64} className="rounded-xl" />
+            <Skeleton width={96} height={64} className="rounded-xl" />
+            <Skeleton width={96} height={64} className="rounded-xl" />
+            <Skeleton width={96} height={64} className="rounded-xl" />
           </div>
 
           <div className="mt-6">

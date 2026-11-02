@@ -18,6 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ResponsiveImage from "@/components/ResponsiveImage";
+import ImageLightbox from "@/components/ImageLightbox";
 import { useAuth } from "@/hooks/useAuth";
 import { supabaseQuery } from "@/lib/supabase-query";
 import { db } from "@/integrations/firebase/client";
@@ -71,6 +73,11 @@ const MyBookings = () => {
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxTitle, setLightboxTitle] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -155,12 +162,25 @@ const MyBookings = () => {
     fetchData();
   }, [user, fetchData]);
 
+  const getProperty = (id: string) => {
+    return properties.find((p) => p.id === id);
+  };
+
   const getPropertyTitle = (id: string) => {
-    return properties.find((p) => p.id === id)?.title || "Property Listing";
+    return getProperty(id)?.title || "Property Listing";
   };
 
   const getPropertyLocation = (id: string) => {
-    return properties.find((p) => p.id === id)?.location || "Rajkot, Gujarat";
+    return getProperty(id)?.location || "Rajkot, Gujarat";
+  };
+
+  const getPropertyImages = (id: string): string[] => {
+    const p = getProperty(id);
+    if (!p) return [];
+    if (Array.isArray(p.images) && p.images.length > 0) return p.images;
+    if (Array.isArray(p.photos) && p.photos.length > 0) return p.photos;
+    if (p.image) return [p.image];
+    return [];
   };
 
   return (
@@ -321,29 +341,63 @@ const MyBookings = () => {
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {booking.property_ids && booking.property_ids.length > 0 ? (
-                          booking.property_ids.map((pid: string) => (
-                            <div
-                              key={pid}
-                              className="p-3 rounded-xl bg-background border border-border flex items-start justify-between gap-2"
-                            >
-                              <div className="min-w-0">
-                                <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate">
-                                  {getPropertyTitle(pid)}
-                                </h4>
-                                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                                  <MapPin className="h-3 w-3 shrink-0" />
-                                  <span className="truncate">{getPropertyLocation(pid)}</span>
-                                </p>
-                              </div>
-                              <Link
-                                to={`/property/${pid}`}
-                                className="text-primary hover:text-primary/80 shrink-0 p-1 rounded-md hover:bg-muted"
-                                title="View details"
+                          booking.property_ids.map((pid: string) => {
+                            const imgs = getPropertyImages(pid);
+                            const title = getPropertyTitle(pid);
+                            const location = getPropertyLocation(pid);
+                            return (
+                              <div
+                                key={pid}
+                                className="p-2.5 rounded-2xl bg-background border border-border flex items-center justify-between gap-3 group/item hover:border-border/80 transition-colors"
                               >
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </div>
-                          ))
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {imgs.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setLightboxImages(imgs);
+                                        setLightboxIndex(0);
+                                        setLightboxTitle(title);
+                                        setLightboxOpen(true);
+                                      }}
+                                      className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/60 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary"
+                                      title="Click to view full image in lightbox"
+                                    >
+                                      <ResponsiveImage
+                                        src={imgs[0]}
+                                        alt={title}
+                                        ratio="none"
+                                        className="w-full h-full"
+                                        imageClassName="w-full h-full object-cover transition-transform duration-300 [@media(hover:hover)]:group-hover/item:scale-105"
+                                      />
+                                    </button>
+                                  ) : (
+                                    <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-muted flex items-center justify-center shrink-0 border border-border/60 text-muted-foreground/60">
+                                      <Building2 className="h-5 w-5" />
+                                    </div>
+                                  )}
+
+                                  <div className="min-w-0">
+                                    <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate">
+                                      {title}
+                                    </h4>
+                                    <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                      <MapPin className="h-3 w-3 shrink-0" />
+                                      <span className="truncate">{location}</span>
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <Link
+                                  to={`/property/${pid}`}
+                                  className="text-primary hover:text-primary/80 shrink-0 p-1.5 rounded-md hover:bg-muted"
+                                  title="View details"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </div>
+                            );
+                          })
                         ) : (
                           <div className="p-3 rounded-xl bg-background border border-border text-xs text-muted-foreground">
                             General Real Estate Consultation Visit
@@ -397,6 +451,14 @@ const MyBookings = () => {
           )}
         </div>
       </main>
+
+      <ImageLightbox
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        title={lightboxTitle}
+      />
 
       <Footer />
     </div>

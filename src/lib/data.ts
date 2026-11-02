@@ -34,7 +34,7 @@ export function formatPrice(price: number): string {
 
 export function cleanListingText(text: string): string {
   if (!text) return "";
-  let clean = text
+  const clean = text
     .replace(/\bbunglow\b/gi, "Bungalow")
     .replace(/\bSami[\s-]furnished\b/gi, "Semi-Furnished")
     .replace(/\bsemi[\s-]furnished\b/gi, "Semi-Furnished")

@@ -10,6 +10,8 @@ import { SkeletonTheme } from "react-loading-skeleton";
 import { generateFirebaseToken } from "./integrations/firebase/client";
 import { onForegroundMessage } from "./integrations/firebase/fcm";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import Loader from "@/components/Loader";
+import WebsitePreloader from "@/components/WebsitePreloader";
 
 // Code-split pages for instant initial load and smooth navigation
 const Index = lazy(() => import("./pages/Index"));
@@ -28,11 +30,8 @@ const LandingPage = lazy(() => import("./pages/LandingPage"));
 const queryClient = new QueryClient();
 
 const PageLoadingFallback = () => (
-  <div className="min-h-[70vh] flex flex-col items-center justify-center">
-    <div className="w-9 h-9 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-    <span className="mt-3 text-[11px] font-semibold tracking-widest uppercase text-muted-foreground font-body">
-      Loading...
-    </span>
+  <div className="min-h-[70vh] flex flex-col items-center justify-center p-6">
+    <Loader size="md" text="Loading..." />
   </div>
 );
 
@@ -161,6 +160,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <WebsitePreloader />
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />

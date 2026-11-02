@@ -126,7 +126,18 @@
     letter-spacing: -0.02em;
   }
   img {
-    content-visibility: auto;
+    max-width: 100%;
+  }
+}
+
+/* Touch device adjustments - disable hover zooms on touch */
+@media (hover: none) {
+  .group:hover .group-hover\:scale-105,
+  .group:hover .group-hover\:scale-110,
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover,
+  .touch-no-zoom {
+    transform: none !important;
   }
 }
 

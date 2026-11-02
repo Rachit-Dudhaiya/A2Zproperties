@@ -1,23 +1,36 @@
+import React, { useState } from "react";
 import { Building2, Phone, MapPin, Mail, Clock, ArrowUpRight, ShieldCheck, Award, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MAIN_PHONE, MAIN_PHONE_DISPLAY, SECONDARY_PHONE, SECONDARY_PHONE_DISPLAY, OFFICE_ADDRESS, OFFICE_HOURS } from "@/lib/data";
 
-const Footer = () => (
-  <footer className="bg-primary dark:bg-card text-primary-foreground border-t border-primary-foreground/10 relative overflow-hidden">
-    {/* Subtle decorative background gradient accent */}
-    <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
-    <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+const Footer = () => {
+  const [logoError, setLogoError] = useState(false);
 
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
-        {/* Column 1: Brand & Credibility */}
-        <div className="space-y-4">
-          <Link to="/" className="flex items-center gap-3 group">
-            <img
-              src="/az-logo-clean.png"
-              alt="A TO Z Properties"
-              className="h-11 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
-            />
+  return (
+    <footer className="bg-primary dark:bg-card text-primary-foreground border-t border-primary-foreground/10 relative overflow-hidden">
+      {/* Subtle decorative background gradient accent */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+          {/* Column 1: Brand & Credibility */}
+          <div className="space-y-4">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="h-10 sm:h-11 w-10 sm:w-11 relative flex items-center justify-center shrink-0">
+                {!logoError ? (
+                  <img
+                    src="/az-logo-clean.png"
+                    alt="A TO Z Properties"
+                    className="h-10 sm:h-11 w-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-accent text-accent-foreground font-bold font-display flex items-center justify-center text-sm shadow-md">
+                    AZ
+                  </div>
+                )}
+              </div>
             <div>
               <span className="font-display font-bold text-xl text-primary-foreground tracking-tight">
                 A TO Z <span className="text-accent font-normal text-sm">PROPERTIES</span>
@@ -196,6 +209,7 @@ const Footer = () => (
       </div>
     </div>
   </footer>
-);
+  );
+};
 
 export default Footer;

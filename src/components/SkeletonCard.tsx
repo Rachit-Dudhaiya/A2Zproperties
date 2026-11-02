@@ -3,7 +3,7 @@ import Skeleton from "react-loading-skeleton";
 const SkeletonCard = () => {
   return (
     <div className="bg-card rounded-2xl overflow-hidden border border-border/70 shadow-card animate-pulse flex flex-col h-full">
-      <div className="relative aspect-[16/10] w-full bg-muted/70">
+      <div className="relative aspect-[4/3] w-full bg-muted/70">
         <Skeleton height="100%" className="absolute inset-0" />
       </div>
       <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col justify-between">

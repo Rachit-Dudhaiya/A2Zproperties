@@ -5,7 +5,6 @@ import ResponsiveImage from "@/components/ResponsiveImage";
 import ImageLightbox from "@/components/ImageLightbox";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { formatPrice, toTitleCase, cleanListingText } from "@/lib/data";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
@@ -161,12 +160,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
   }, [zoom, naturalSize, getMaxPan]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="h-full"
-    >
+    <div className="h-full">
       <div className="group h-full flex flex-col">
         <div className="bg-card rounded-2xl overflow-hidden border border-border/80 shadow-card hover:shadow-card-hover transition-all duration-300 group-hover:-translate-y-1.5 flex flex-col h-full focus-within:ring-2 focus-within:ring-accent relative">
           
@@ -177,19 +171,17 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setViewerIndex(0);
-              setViewerOpen(true);
+              navigate(`/property/${property.id}`);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                setViewerIndex(0);
-                setViewerOpen(true);
+                navigate(`/property/${property.id}`);
               }
             }}
             className="group/image relative aspect-[4/3] sm:aspect-[16/10] w-full bg-muted/60 overflow-hidden cursor-pointer select-none"
-            aria-label={`View photos for ${toTitleCase(property.title)}`}
-            title="Click to view full photos"
+            aria-label={`Open details for ${toTitleCase(property.title)}`}
+            title="Open property details"
           >
             {Array.isArray(property.images) && property.images.length > 1 ? (
               <div className="h-full" onClick={(e) => e.stopPropagation()}>
@@ -210,8 +202,7 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          setViewerIndex(i);
-                          setViewerOpen(true);
+                          navigate(`/property/${property.id}`);
                         }}
                       >
                         {src ? (
@@ -392,8 +383,8 @@ const PropertyCard = ({ property, index = 0 }: Props) => {
 
     {/* keyboard navigation handled via top-level useEffect */}
 
-  </motion.div>
+  </div>
   );
 };
 
-export default PropertyCard;
+export default React.memo(PropertyCard);

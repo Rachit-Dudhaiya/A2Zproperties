@@ -25,7 +25,7 @@ import { collection, query as fsQuery, orderBy as fsOrderBy, onSnapshot } from "
 import SkeletonCard from "@/components/SkeletonCard";
 import { motion, AnimatePresence } from "framer-motion";
 import SEO from "@/components/SEO";
-import { MAIN_PHONE, MAIN_PHONE_DISPLAY, SECONDARY_PHONE, SECONDARY_PHONE_DISPLAY } from "@/lib/data";
+import { MAIN_PHONE, MAIN_PHONE_DISPLAY, SECONDARY_PHONE, SECONDARY_PHONE_DISPLAY, VISIT_CHARGE } from "@/lib/data";
 
 const Properties = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -219,6 +219,11 @@ const Properties = () => {
             <p className="mt-2 text-white/80 font-body text-sm sm:text-base">
               Browse thoroughly inspected flats, bungalows, and commercial units available for immediate rent in Rajkot.
             </p>
+            <div className="mt-5 inline-flex max-w-full items-center gap-2 rounded-full border border-amber-300/50 bg-amber-400/15 px-4 py-2 text-sm font-semibold text-amber-100">
+              <span className="shrink-0 rounded-full bg-amber-300 px-2 py-0.5 text-xs font-bold text-stone-950">FREE</span>
+              <span>First site booking is free</span>
+              <span className="hidden text-xs font-normal text-white/70 sm:inline">₹{VISIT_CHARGE} after your first visit</span>
+            </div>
           </div>
         </div>
       </section>

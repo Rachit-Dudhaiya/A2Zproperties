@@ -55,6 +55,8 @@ export default function BookSlot() {
   const [search] = useSearchParams();
   const propertyId = search.get("propertyId");
   const [property, setProperty] = useState<any | null>(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(propertyId || "");
+  const [catalogProperties, setCatalogProperties] = useState<any[]>([]);
   const [relatedProperties, setRelatedProperties] = useState<any[]>([]);
   const [extraPropertyIds, setExtraPropertyIds] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -107,8 +109,8 @@ export default function BookSlot() {
   };
 
   const selectedPropertyIds = useMemo(
-    () => (propertyId ? [propertyId, ...extraPropertyIds] : []),
-    [propertyId, extraPropertyIds]
+    () => (selectedPropertyId ? [selectedPropertyId, ...extraPropertyIds] : []),
+    [selectedPropertyId, extraPropertyIds]
   );
   const brokerage =
     property && (property.status === "For Rent" || (property.listed_by && String(property.status).toLowerCase().includes("rent")))
@@ -138,20 +140,23 @@ export default function BookSlot() {
 
   // Load selected property & related recommendations
   useEffect(() => {
-    if (!propertyId) return;
     (async () => {
       if (!db) return;
       try {
-        const dref = fsDoc(db, "properties", propertyId);
-        const snap = await fsGetDoc(dref);
-        if (!snap.exists()) return;
-
-        const selected = { id: snap.id, ...snap.data() } as any;
-        setProperty(selected);
-
         const allSnap = await fsGetDocs(collection(db, "properties"));
         const all: any[] = [];
         allSnap.forEach((d) => all.push({ id: d.id, ...d.data() }));
+        setCatalogProperties(all);
+
+        if (!propertyId) {
+          setRelatedProperties(all);
+          return;
+        }
+
+        const selected = all.find((p) => p.id === propertyId);
+        if (!selected) return;
+        setSelectedPropertyId(selected.id);
+        setProperty(selected);
 
         const selectedIntent = normalizeIntent(selected.status);
         const selectedType = normalizeType(selected.type);
@@ -181,6 +186,15 @@ export default function BookSlot() {
       }
     })();
   }, [propertyId]);
+
+  const handlePrimaryPropertyChange = (id: string) => {
+    const selected = catalogProperties.find((p) => p.id === id);
+    if (!selected) return;
+    setSelectedPropertyId(id);
+    setProperty(selected);
+    setExtraPropertyIds([]);
+    setRelatedProperties(catalogProperties.filter((p) => p.id !== id));
+  };
 
   // The first authenticated booking is free; later bookings use the standard visit charge.
   useEffect(() => {
@@ -280,7 +294,7 @@ export default function BookSlot() {
       formData.append("phone", phone || "");
       formData.append("amount", String(totalDueNow));
       formData.append("upi", UPI_ID);
-      formData.append("propertyId", propertyId || "");
+      formData.append("propertyId", selectedPropertyId || "");
       formData.append("propertyTitle", property?.title || "");
       formData.append("visitDate", date || "");
       formData.append("timeSlot", slot || "");
@@ -375,7 +389,7 @@ export default function BookSlot() {
           const titles: string[] = [];
           slotToPropIds[ts].forEach((pid) => {
             const title = idToTitle[pid] || pid;
-            if (propertyId && pid === propertyId) return;
+            if (selectedPropertyId && pid === selectedPropertyId) return;
             titles.push(title);
           });
           slotToTitles[ts] = titles;
@@ -385,11 +399,15 @@ export default function BookSlot() {
         console.warn("Failed to fetch bookings for date", err);
       }
     })();
-  }, [date, propertyId]);
+  }, [date, selectedPropertyId]);
 
   // Validation per step
   const validateStep1 = () => {
     const errs: { date?: string; slot?: string } = {};
+    if (!selectedPropertyId) {
+      toast({ title: "Select a property", description: "Choose a property before selecting your visit slot.", variant: "destructive" });
+      return false;
+    }
     if (!date) errs.date = "Please select a visit date.";
     if (!slot) errs.slot = "Please select an available time slot.";
     setErrors((prev) => ({ ...prev, ...errs }));
@@ -718,15 +736,37 @@ export default function BookSlot() {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
-                      <Info className="h-4 w-4 shrink-0" />
-                      <span>
-                        No specific property selected from URL. Please browse{" "}
-                        <Link to="/properties" className="underline font-semibold">
-                          all listings
-                        </Link>{" "}
-                        or choose related options below.
-                      </span>
+                    <div className="space-y-3">
+                      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                        <label className="block text-sm font-semibold text-foreground mb-2">
+                          Choose a property for your visit <span className="text-destructive">*</span>
+                        </label>
+                        <Select value={selectedPropertyId} onValueChange={handlePrimaryPropertyChange}>
+                          <SelectTrigger className="h-12 bg-card">
+                            <SelectValue placeholder="Select a property" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {catalogProperties.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                <span className="truncate">{p.title || "Untitled property"}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          You can add up to {MAX_PROPERTIES_PER_VISIT - 1} other properties after choosing the primary listing.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
+                        <Info className="h-4 w-4 shrink-0" />
+                        <span>
+                          Need to compare listings first? Browse{" "}
+                          <Link to="/properties" className="underline font-semibold">
+                            all properties
+                          </Link>
+                          .
+                        </span>
+                      </div>
                     </div>
                   )}
 

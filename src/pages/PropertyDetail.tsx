@@ -738,14 +738,14 @@ const PropertyDetail = () => {
               <div className="p-4 rounded-xl bg-muted/60 border border-border space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Site Visit Charge
+                    First Site Visit
                   </span>
                   <span className="font-display font-bold text-lg text-foreground">
-                    ₹{VISIT_CHARGE}
+                    FREE
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-snug">
-                  Tour up to 3 shortlisted properties accompanied by our senior advisor.
+                  Your first site booking is free. Later visits cost ₹{VISIT_CHARGE}. Tour up to 3 shortlisted properties with our senior advisor.
                 </p>
               </div>
 
